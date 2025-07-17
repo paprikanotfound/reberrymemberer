@@ -1,38 +1,28 @@
 # sv
+...//untogether.now
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+## start
 
-## Creating a project
+git init
+git remote add origin https://github.com/paprikanotfound/untogethernow
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git push -u origin main
 
-If you're seeing this, you've probably already done this step. Congrats!
+## D1 migrations
 
-```bash
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+```
+npx wrangler d1 migrations create untogethernow_db <message>
+npx wrangler d1 migrations list untogethernow_db
+npx wrangler d1 migrations apply untogethernow_db --local
+npx wrangler d1 execute untogethernow_db --local --file=./local.queries.sql
 ```
 
-## Developing
+## Workers secrets
+[Secrets on deployed Workers](https://developers.cloudflare.com/workers/configuration/secrets/#adding-secrets-to-your-project)
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
+npx wrangler pages secret put <KEY>
+npx wrangler pages versions secret put <KEY>
 ```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
