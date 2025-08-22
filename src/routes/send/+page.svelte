@@ -314,7 +314,7 @@
       // reset zoom
       if (props.tool == "bg") {
         elmEditor?.resetZoom() 
-        elmCanvas?.selectBgPicture()
+        // elmCanvas?.selectBgPicture()
       }
     }}
     onundo={() => elmCanvas?.undo()}
