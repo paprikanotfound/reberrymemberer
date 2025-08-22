@@ -1,1 +1,73 @@
 @import 'tailwindcss';
+
+@theme {
+	--default-font-family: times new roman,times,serif;
+}
+
+@layer base {
+	html, body {
+		@apply size-full antialiased;
+	}
+	body {
+		@apply text-base sm:text-[17px];
+	}
+	button {
+		@apply hover:cursor-pointer underline;
+	}
+	a {
+		@apply underline;
+	}
+	input {
+		@apply border-b flex-1;
+	}
+	label {
+		@apply flex flex-row gap-2 max-sm:justify-between text-base  items-center;
+	}
+}
+
+@utility postcard-shadow-hover {
+	box-shadow: rgba(17, 12, 46, 0.025) 0px 20px 10px -0px, rgba(0, 0, 0, 0.9) 0px 1px 1px -1px;
+}
+
+@utility postcard-shadow {
+	box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 2px -1px, rgba(0, 0, 0, 0.9) 0px 1px 2px -1px;
+}
+
+
+/* measure element based on parent's size */
+.aspect-container {
+	container-type: size;
+}
+@container (aspect-ratio > 1) {
+	.aspect-box {
+		height: 100%;
+		width: auto;
+	}
+}
+@container (aspect-ratio <= 1) {
+	.aspect-box {
+		width: 100%;
+		height: auto;
+	}
+}
+
+/* beautify text */
+body {
+	text-rendering: optimizeLegibility;
+}
+
+/* disable mobile tap zoom, etc */
+html, body {
+  touch-action: manipulation;
+}
+
+/* postard canvas-like grid  */
+.grid-overlay {
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(to right, #dedddd .5px, transparent .5px),
+    linear-gradient(to bottom, #dedddd .5px, transparent .5px);
+  background-size: 10px 10px; /* adjust grid cell size */
+  pointer-events: none; /* lets mouse go through */
+}

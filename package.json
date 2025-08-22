@@ -22,7 +22,7 @@
 		"@eslint/js": "^9.18.0",
 		"@sveltejs/adapter-auto": "^6.0.0",
 		"@sveltejs/adapter-cloudflare": "^7.0.5",
-		"@sveltejs/kit": "^2.16.0",
+		"@sveltejs/kit": "https://pkg.pr.new/sveltejs/kit/@sveltejs/kit@b921e13",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@tailwindcss/vite": "^4.0.0",
 		"@vitest/browser": "^3.2.3",
@@ -34,7 +34,7 @@
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"prettier-plugin-tailwindcss": "^0.6.11",
-		"svelte": "^5.0.0",
+		"svelte": "https://pkg.pr.new/svelte@15844",
 		"svelte-check": "^4.0.0",
 		"tailwindcss": "^4.0.0",
 		"typescript": "^5.0.0",
@@ -43,5 +43,15 @@
 		"vitest": "^3.2.3",
 		"vitest-browser-svelte": "^0.1.0",
 		"wrangler": "^4.24.3"
+	},
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.856.0",
+		"@aws-sdk/s3-request-presigner": "^3.856.0",
+		"bits-ui": "^2.8.13",
+		"compressorjs": "^1.2.1",
+		"perfect-freehand": "^1.2.2",
+		"runed": "^0.31.1",
+		"stripe": "^18.3.0",
+		"zod": "^4.0.13"
 	}
 }

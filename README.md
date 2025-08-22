@@ -13,10 +13,10 @@ git push -u origin main
 ## D1 migrations
 
 ```
-npx wrangler d1 migrations create untogethernow_db <message>
-npx wrangler d1 migrations list untogethernow_db
-npx wrangler d1 migrations apply untogethernow_db --local
-npx wrangler d1 execute untogethernow_db --local --file=./local.queries.sql
+npx wrangler d1 migrations create untogether-db <message>
+npx wrangler d1 migrations list untogether-db
+npx wrangler d1 migrations apply untogether-db --local
+npx wrangler d1 execute untogether-db --local --file=./local.queries.sql
 ```
 
 ## Workers secrets
