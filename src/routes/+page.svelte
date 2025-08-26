@@ -10,12 +10,10 @@
   ]
   let sample = samples[Math.floor(Math.random() * samples.length)];
   let emlPostcard: Postcard|undefined;
-  let loaded = $state(false)
-
+  
   // onMount(() => {
   //   setTimeout(() => {
   //     if (!emlPostcard) return
-  //     loaded = true
   //     emlPostcard.flipToBack()
   //   }, 550)
   // })
@@ -55,7 +53,7 @@
       <br>
       <!-- <p class="text-sm">Inspired by <a href="https://www.youtube.com/results?search_query=drop+nineteens+kick+the+tragedy" class="italic">Drop Nineteens - Kick The Tragedy</a></p> -->
       <p class="text-sm">Photography <a href="https://instagram.com/hoyeonwang/" target="_blank" class="italic">Wang Hoyeon</a></p>
-      <p class="text-sm">Designed & development <a href="https://paprika.fyi" target="_blank" class="italic">Paprika®</a></p>
+      <p class="text-sm">Design & development <a href="https://paprika.fyi" target="_blank" class="italic">Paprika®</a></p>
     </section>
   </div> 
   <div id="postcard" class:hidden={infoVisible}
