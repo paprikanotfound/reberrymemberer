@@ -1,28 +1,48 @@
-<script>
+<script lang="ts">
 	import Postcard from "$lib/components/postcard.svelte";
 	import { POSTCARD } from "$lib/types";
+	import { onMount } from "svelte";
   let infoVisible = $state(false)
+  const samples = [
+    { front: "./IMG_3423front.jpg", back: "./back2.jpg"},
+    { front: "./IMG_3423front.jpg", back: "./back3.jpg"},
+    { front: "./IMG_3423front.jpg", back: "./back4.jpg"}
+  ]
+  let sample = samples[Math.floor(Math.random() * samples.length)];
+  let emlPostcard: Postcard|undefined;
+  let loaded = $state(false)
+
+  onMount(() => {
+    setTimeout(() => {
+      if (!emlPostcard) return
+      loaded = true
+      emlPostcard.flipToBack()
+    }, 550)
+  })
 </script>
 
 <div class="p-3 sm:p-4 w-full h-full relative aspect-container flex flex-col gap-2">
-  <div id="header">
+  <!-- <div id="header">
     <p class="flex gap-2">
       <span>Reberrymemberer</span>
       <span>–</span>
-      <span>
-        <a href="/send">Send</a>, <button class="hover:underline" onclick={() => { infoVisible = !infoVisible }}>Info</button>
-      </span>
+      <span><a href="/send">Send</a>, <button class="hover:underline" onclick={() => { infoVisible = !infoVisible }}>Info</button></span>
     </p>
     <p class="leading-tight">
       A small postal experiment for thoughts too soft for the internet and too fleeting for a full letter. 
       Write to someone far, to someone you miss, to your future self. Send a message the moment it comes, before it fades. 
     </p>
-  </div>
+  </div> -->
   <div id="info" class:hidden={!infoVisible} class="flex-1 w-full flex flex-col items-start gap-8">
     <span>
       (<button class="hover:underline" onclick={() => { infoVisible = false }}>Close</button>)
     </span>
-    <section class="max-w-2xl leading-tight">
+    <section class="_max-w-2xl leading-tight">
+      <p class="leading-tight">
+        Reberrymemberer – A small postal experiment for thoughts too soft for the internet and too fleeting for a full letter. 
+        Send a postcard to someone far, to someone you miss, to your future self. Send a message the moment it comes, before it fades. 
+      </p>
+      <br>
       <p>
         {POSTCARD.cost_label}, A6, printed in the Netherlands, worldwide delivery.  
       </p>
@@ -33,23 +53,29 @@
         </a> →)
       </p>
       <br>
-      <!-- <p class="text-sm">This page is named after a song by Drop Nineteens.</p> -->
-      <!-- <p class="text-sm">The postcard example is a screengrab from <a href="https://letterboxd.com/film/lions-love/" target="_blank">Lions Love (1969)</a> directed by Agnès Varda.</p> -->
-      <!-- <br/> -->
-      <p class="text-sm">Designed & developed by <a href="https://paprika.fyi" target="_blank">Paprika®</a></p>
+      <!-- <p class="text-sm">Inspired by <a href="https://www.youtube.com/results?search_query=drop+nineteens+kick+the+tragedy" class="italic">Drop Nineteens - Kick The Tragedy</a></p> -->
+      <p class="text-sm">Photography <a href="https://instagram.com/hoyeonwang/" target="_blank" class="italic">Wang Hoyeon</a></p>
+      <p class="text-sm">Designed & development <a href="https://paprika.fyi" target="_blank" class="italic">Paprika®</a></p>
     </section>
   </div> 
   <div id="postcard" class:hidden={infoVisible}
-    class="absolute left-1/2 top-[57%] sm:top-1/2 -translate-x-1/2 -translate-y-1/2 h-auto w-full max-w-[89%] max-h-[75%] md:max-w-[50rem] lg:max-w-[40vw]" 
+    class="
+      absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 
+      h-auto w-full max-w-[89%] max-h-[75%] lg:max-w-[45vw]
+      flex flex-col gap-8
+    " 
     style:aspect-ratio={POSTCARD.size.w/POSTCARD.size.h}
     >
-    <Postcard class="size-full" 
-      front="./IMG_3423 copy.jpg"
-      back="./back.jpg"
-    />
+    <Postcard bind:this={emlPostcard} class="size-full" front={sample.front} back={sample.back} />
+    <div class="flex flex-col gap-2">
+      <span class="self-center leading-none _text-center">Reberrymemberer – A small postal experiment.</span>
+      <div class="w-full flex gap-1 justify-center items-center leading-none">
+        <a href="/send">Write</a> – <button onclick={() => { infoVisible = !infoVisible }}>Info</button>
+      </div>
+    </div>
   </div>
-  <div class:hidden={infoVisible} class="flex-1"></div>
+  <!-- <div class:hidden={infoVisible} class="flex-1"></div>
   <div class:hidden={infoVisible} class="text-xs sm:text-sm leading-tight text-end">
     Photography: <a href="https://instagram.com/hoyeonwang/" target="_blank">Wang Hoyeon</a>.
-  </div>
+  </div> -->
 </div>

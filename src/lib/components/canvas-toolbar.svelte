@@ -38,12 +38,12 @@
 			size: size.current, 
 			color: color.current 
 		};
-		untrack(() => { if (loaded) onchange?.(updated); });
+		untrack(() => { onchange?.(updated); });
 	});
 
-	onMount(() => {
-		loaded = true
-	})
+	// onMount(() => {
+	// 	loaded = true
+	// })
 
 </script>
 

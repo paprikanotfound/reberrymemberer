@@ -100,8 +100,14 @@
     const [x, y] = getCanvasCoords(e)
     mouseOffset.x = x
     mouseOffset.y = y
+    
     activeSpinY += x < elm!.clientWidth/2 ? 180 : -180;
     
+    redraw()
+  }
+
+  export function flipToBack() {
+    activeSpinY = 180;
     redraw()
   }
 

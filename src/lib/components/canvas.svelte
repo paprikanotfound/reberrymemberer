@@ -52,11 +52,10 @@
   let isClickAction = false;
 
   let activeStroke: Stroke|undefined = $state();
-  let erasedStrokeIds = new SvelteSet()//$state<Set<number>>(new SvelteSet());
+  let erasedStrokeIds = new SvelteSet();
   
   let isDraggingImage = $state(false);
   let activeOffset = $state({ x: 0, y: 0 });
-
 
 
   function getCanvasCoords(e: PointerEvent): [number, number] {
@@ -91,9 +90,9 @@
         points: [[x, y, e.pressure]],
         options: {
           size: options.size,
-          thinning: 0.5,
-          smoothing: 1,
-          streamline: .8,
+          thinning: .5,
+          smoothing: .5,
+          streamline: .7,
           easing: (t) => t,
           simulatePressure: true,
           last: true
@@ -171,22 +170,18 @@
   function handlePointerUp(e: PointerEvent) { 
     if (e.pointerId == mainPointer) finishGesture(); 
   }
-  
 
   function finishGesture(cancelled: boolean = false) {
     if (!cancelled) {
       if (tool == "bg") {
         if (isClickAction) {
-           selectBgPicture()
+          selectBgPicture()
         } else {
           updateContent({ bgOffset: activeOffset });
         }
       } else if (tool === 'eraser' && erasedStrokeIds.size > 0) {
-        
         updateContent({ strokes: content.strokes.filter((_, i) => !erasedStrokeIds.has(i)) });
-
       } else if (tool === 'brush' && activeStroke) {
-        
         updateContent({ strokes: [...content.strokes, activeStroke], });
       }
     }

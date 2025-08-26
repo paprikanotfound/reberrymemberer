@@ -16,7 +16,9 @@
 	import { isHttpError } from "@sveltejs/kit";
 	import Aspect from "$lib/components/aspect.svelte";
   import countries from '$lib/countries.json'
+  import { dev, browser } from '$app/environment';
 
+  
   type Pages = {
     front: CanvasContent;
     back: CanvasContent;
@@ -217,9 +219,9 @@
   <div id="topbar" class="fixed top-0 left-0 w-full z-40 transform-none">
     <div id="nav" class="p-2 sm:p-4 leading-snug font-light relative flex justify-between gap-4 w-full bg-white shadow-xl shadow-white">
       <span class="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 justify-center">
-        <span class:italic={step == "front"} class:underline={step == "front"}>Front</span> / 
-        <span class:italic={step == "back"} class:underline={step == "back"}>Back</span> / 
-        <span class:italic={step == "address"} class:underline={step == "address"}>Send</span>
+        <button onclick={()=> { loadStep("front") }} class:italic={step == "front"} class:underline={step == "front"}>Front</button> / 
+        <button onclick={()=> { loadStep("back") }} class:italic={step == "back"} class:underline={step == "back"}>Back</button> / 
+        <button onclick={()=> { loadStep("address") }} class:italic={step == "address"} class:underline={step == "address"}>Send</button>
       </span>
       <button onclick={onPrev} class="flex gap-2 justify-center items-center">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
@@ -235,18 +237,31 @@
         {/if}
       </span>
     </div>
-    
-    <!-- <button onclick={async () => {
-        downloadBlob(await generatePageImage(
-          pages.current.back.strokes, 
-          pages.current.back.bg ? base64ToBlob(pages.current.back.bg) : undefined,
-          pages.current.back.bgOffsetY,
-          POSTCARD.type, 1
-        ), 'front.jpg')
-      }}>download</button>  -->
-   
+    {#if browser && dev && step !== "address"}
+      <button class="m-2" 
+        onclick={async () => {
+          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+          let key = Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+          if (step == "front"){
+            downloadBlob(await generatePageImage(
+              pages.current.front.strokes, 
+              pages.current.front.bg ? base64ToBlob(pages.current.front.bg) : undefined,
+              pages.current.front.bgOffsetY,
+              POSTCARD.type, 1
+            ), key+'_front.jpg')
+          } else {
+            downloadBlob(await generatePageImage(
+              pages.current.back.strokes, 
+              pages.current.back.bg ? base64ToBlob(pages.current.back.bg) : undefined,
+              pages.current.back.bgOffsetY,
+              POSTCARD.type, 1
+            ), key+'_back.jpg')
+          }
+        }}>
+        download
+      </button> 
+    {/if}
   </div>
-
 
   <div class:hidden={!canvasInPenMode} class="absolute left-2 top-1/2 z-50">
     <button class="text-sm flex justify-center gap-1" onclick={() => { canvasInPenMode = false }}>
