@@ -12,13 +12,13 @@
   let emlPostcard: Postcard|undefined;
   let loaded = $state(false)
 
-  onMount(() => {
-    setTimeout(() => {
-      if (!emlPostcard) return
-      loaded = true
-      emlPostcard.flipToBack()
-    }, 550)
-  })
+  // onMount(() => {
+  //   setTimeout(() => {
+  //     if (!emlPostcard) return
+  //     loaded = true
+  //     emlPostcard.flipToBack()
+  //   }, 550)
+  // })
 </script>
 
 <div class="p-3 sm:p-4 w-full h-full relative aspect-container flex flex-col gap-2">
