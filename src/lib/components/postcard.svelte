@@ -6,12 +6,14 @@
   interface Props {
     front: string;
     back: string;
+    initSpin?: number;
+    onspin?: (spin: number) => void;
     aspect?: string;
     class?: string;
 		[key: string]: any;
   }
 
-  let { front, back, locked, aspect, class: restClasses, ...restProps  }: Props = $props()
+  let { front, back, initSpin, onspin, aspect, class: restClasses, ...restProps  }: Props = $props()
 
 	const MAX_BRIGHTNESS = 1.1
   const FLIP_THRESHOLD = 80;
@@ -20,8 +22,8 @@
   let elm: HTMLDivElement | undefined = $state()
   let parentWidth = $state(0)
   let parentHeight = $state(0)
-  let activeSpinY = $state(0)
-  let tilting = new Spring({ x: 0, y: 0, bright: 1 });
+  let activeSpinY = $state(initSpin ?? 0)
+  let tilting = new Spring({ x: 0, y: initSpin ?? 0, bright: 1 });
   let glaring = new Spring({ posX: 50, posY: 50, alpha: 0.2 });
   let mouseOffset = $state({ x: 0, y: 0 });
 
@@ -103,11 +105,14 @@
     
     activeSpinY += x < elm!.clientWidth/2 ? 180 : -180;
     
+    onspin?.(activeSpinY)
     redraw()
   }
 
   export function flipToBack() {
     activeSpinY = 180;
+
+    onspin?.(activeSpinY)
     redraw()
   }
 
@@ -227,7 +232,6 @@
       "></div>
   </div>
 {/snippet}
-
 
 <div
   role="button"

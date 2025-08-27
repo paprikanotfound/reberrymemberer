@@ -1,15 +1,12 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { BRUSH_COLORS, BRUSH_COLORS_TEXT, BRUSH_SIZES, type CanvasContent, type CanvasTool, type Stroke } from "$lib/components/canvas.types";
+	import { BRUSH_COLORS, BRUSH_COLORS_TEXT, BRUSH_SIZES, type CanvasTool } from "$lib/components/canvas.types";
 	import Canvas from "$lib/components/canvas.svelte";
 	import Editor from "$lib/components/editor.svelte";
-	import { drawObjectCover, drawStokes } from "$lib/utils/utils.canvas";
-	import { downloadBlob, loadImage } from "$lib/utils/utils.image";
+	import { downloadBlob } from "$lib/utils/utils.image";
 	import { createCheckout } from "./send.remote";
 	import { uploadContent } from "$lib/utils/utils.upload";
-	import { PersistedState } from "runed";
 	import { onMount, untrack } from "svelte";
-	import { base64ToBlob } from "$lib/utils/utils.file";
 	import CanvasToolbar from "$lib/components/canvas-toolbar.svelte";
 	import type { AddressDetails } from "$lib/api.printone.server";
 	import { POSTCARD } from "$lib/types";
@@ -17,12 +14,8 @@
 	import Aspect from "$lib/components/aspect.svelte";
   import countries from '$lib/countries.json'
   import { dev, browser } from '$app/environment';
+	import { createPersistedPage } from "$lib/components/pagemanager.svelte";
 
-  
-  type Pages = {
-    front: CanvasContent;
-    back: CanvasContent;
-  }
   
   const DEFAULT_TOOLS_FRONT = {
     tool: <CanvasTool> "brush",
@@ -41,17 +34,11 @@
 
   let elmEditor: Editor | undefined = $state()
   let elmCanvas: Canvas | undefined = $state()
-  let canvasCanUndo = $state(false)
-  let canvasCanRedo = $state(false)
 
-  const pages = new PersistedState<Pages>("pages", 
-    { 
-      front: { strokes: [], bgOffsetX: 0, bgOffsetY: 0 }, 
-      back: { strokes: [], bgOffsetX: 0, bgOffsetY: 0 },
-    }, 
-    { storage: "session" }
-  );
-  
+  const pageFront = createPersistedPage("front");
+  const pageBack = createPersistedPage("back");
+  let currentPage = $state(pageFront)
+
   let sender: AddressDetails = $state({
     name: '',
     address: '',
@@ -102,14 +89,6 @@
   onMount(async () => { loadStep(step); });
 
 
-  async function onContentChanged(content: CanvasContent) {
-    if (step == "front") {
-      pages.current.front = content;
-    } else if (step == "back") {
-      pages.current.back = content
-    }
-  }
-
   async function loadStep(next: Step) {
     switch(next) {
       case -1: {
@@ -117,13 +96,13 @@
         break
       }
       case 'front': {
-        elmEditor?.resetZoom()
-        elmCanvas?.setContent(pages.current.front);
+        elmEditor?.resetZoom();
+        currentPage = pageFront;
         break
       }
       case 'back': {
-        elmEditor?.resetZoom()
-        elmCanvas?.setContent(pages.current.back);
+        elmEditor?.resetZoom();
+        currentPage = pageBack;
         break
       }
       case 'address': {
@@ -133,45 +112,11 @@
     step = next;
   }
 
-  async function generatePageImage(strokes: Stroke[], bg?: File|Blob, offsetY?: number, type?: string, quality?: number) {
-    return new Promise<Blob>(async (res, rej) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = POSTCARD.size.w;
-      canvas.height = POSTCARD.size.h;
-      // ctx
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return rej("No 2D context");
-      // bg color
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      // bg img
-      if (bg) {
-        const elmImage = bg ? await loadImage(bg) : null;
-        if (!elmImage) return rej("Background not loaded");
-        drawObjectCover(ctx, elmImage, canvas.width, canvas.height, offsetY);
-      }
-      // strokes
-      drawStokes(ctx, canvas.width, canvas.height, strokes);
-      // save
-      canvas.toBlob(blob => {
-        if (blob) res(blob);
-        else rej("Failed to export blob");
-      }, type, quality);
-    })
-  }
-
   async function requestCheckoutLink() {
     try {
-      const [pageFront, pageBack] = await Promise.all([
-        generatePageImage(
-          pages.current.front.strokes, 
-          pages.current.front.bg ? base64ToBlob(pages.current.front.bg) : undefined,
-          pages.current.front.bgOffsetY,
-          POSTCARD.type, 1
-        ),
-        generatePageImage(
-          pages.current.back.strokes, undefined, 0, POSTCARD.type, 1
-        )
+      const [pageFrontImg, pageBackImg] = await Promise.all([
+        pageFront.exportImage(POSTCARD.type, 1),
+        pageBack.exportImage(POSTCARD.type, 1),
       ]);
 
       const result = await createCheckout($state.snapshot({
@@ -179,14 +124,14 @@
         recipient,
         sendDate,
         frontType: POSTCARD.type,
-        frontSize: pageFront.size,
+        frontSize: pageFrontImg.size,
         backType: POSTCARD.type,
-        backSize: pageBack.size,
+        backSize: pageBackImg.size,
       }));
 
       await Promise.allSettled([
-        uploadContent(result.url_front, pageFront),
-        uploadContent(result.url_back, pageBack),
+        uploadContent(result.url_front, pageFrontImg),
+        uploadContent(result.url_back, pageBackImg),
       ])
 
       window.location.href = result.url_checkout;
@@ -241,22 +186,9 @@
       <button class="m-2" 
         onclick={async () => {
           const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-          let key = Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-          if (step == "front"){
-            downloadBlob(await generatePageImage(
-              pages.current.front.strokes, 
-              pages.current.front.bg ? base64ToBlob(pages.current.front.bg) : undefined,
-              pages.current.front.bgOffsetY,
-              POSTCARD.type, 1
-            ), key+'_front.jpg')
-          } else {
-            downloadBlob(await generatePageImage(
-              pages.current.back.strokes, 
-              pages.current.back.bg ? base64ToBlob(pages.current.back.bg) : undefined,
-              pages.current.back.bgOffsetY,
-              POSTCARD.type, 1
-            ), key+'_back.jpg')
-          }
+          const key = Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+          const pic = await (step == "front" ? pageFront.exportImage() : pageBack.exportImage());
+          downloadBlob(pic, key + '_back.jpg')
         }}>
         download
       </button> 
@@ -284,17 +216,15 @@
         aspect={POSTCARD.size.w/POSTCARD.size.h} 
         class="relative max-w-[80vw] max-h-[75vh]"
         style="transform: translate({details.x}px, {details.y}px); scale: {details.scale};"
-        >
+      >
         <div id="canvas-grid" class="grid-overlay absolute top-0 left-0 w-full h-full -z-1 pointer-events-none"></div>
         
         <Canvas id="front" 
           bind:this={elmCanvas}
-          bind:canUndo={canvasCanUndo}
-          bind:canRedo={canvasCanRedo}
           bind:inPenMode={canvasInPenMode}
+          bind:persistedPage={currentPage}
           tool={curCanvasTool.tool}
           opts={{ color: curCanvasTool.color, size: curCanvasTool.size }}
-          onchange={onContentChanged}
           aspect={`${POSTCARD.size.w}/${POSTCARD.size.h}`}
           locked={isPanningZooming}
           class="size-full border-[.5px] border-black/50 "
@@ -335,8 +265,8 @@
     onundo={() => elmCanvas?.undo()}
     onredo={() => elmCanvas?.redo()}
     onclear={() => elmCanvas?.clear()}
-    canUndo={canvasCanUndo}
-    canRedo={canvasCanRedo}
+    canUndo={currentPage.canUndo}
+    canRedo={currentPage.canRedo}
     colors={step == "front" ? BRUSH_COLORS : BRUSH_COLORS_TEXT}
     data-hide={step == "address"}
     class="data-[hide='true']:hidden"

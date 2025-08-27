@@ -4,10 +4,12 @@
 	import { getStroke } from 'perfect-freehand';
 	import { resizeImage } from '$lib/utils/utils.image';
 	import { base64ToBlob, fileToBase64, normalizeFiles } from '$lib/utils/utils.file';
-  import { StateHistory } from "runed";
 	import { SvelteSet } from 'svelte/reactivity';
+	import type { PersistedPage } from './pagemanager.svelte';
+
 
   interface Props {
+    persistedPage: PersistedPage;
     tool: CanvasTool
     opts: {
       color: string;
@@ -16,8 +18,6 @@
     locked: boolean;
     aspect: string;
     class?: string;
-		canUndo?: boolean;
-		canRedo?: boolean;
 		inPenMode?: boolean;
 		[key: string]: any;
   }
@@ -25,12 +25,10 @@
   const MIN_DISTANCE = .5; // Adjust to your desired precision
 
   let { 
+    persistedPage=$bindable(),
     opts:options=$bindable(), 
     tool=$bindable(), 
-    canUndo=$bindable(false), 
-    canRedo=$bindable(false), 
     inPenMode=$bindable(false), 
-    onchange,
     locked, 
     aspect, 
     class: restClasses, 
@@ -44,9 +42,7 @@
   let boxWidth: number = $state(0);
   let boxHeight: number = $state(0);
 
-  const DEFAULT_CONTENT = { strokes: [], bgOffsetX: 0, bgOffsetY: 0 }
-  let content: CanvasContent = $state(DEFAULT_CONTENT)
-  let history = new StateHistory(() => content, (c) => (content = c));
+
   let mainPointer = -1;
   let initPointerCoors: { x: number; y: number }|null = null;
   let isClickAction = false;
@@ -57,6 +53,7 @@
   let isDraggingImage = $state(false);
   let activeOffset = $state({ x: 0, y: 0 });
 
+  
 
   function getCanvasCoords(e: PointerEvent): [number, number] {
     if (!elmBox) return [0, 0];
@@ -73,7 +70,7 @@
     
     if (e.pointerType === "pen") {
       inPenMode = true
-      console.log("Likely Apple Pencil (on iPad)");
+      // console.log("Likely Apple Pencil (on iPad)");
     }
 
     e.preventDefault()
@@ -103,7 +100,7 @@
     } else if (tool == "eraser") {
       erasedStrokeIds.clear();
     } else if (tool == "bg") {
-      activeOffset = { x: content.bgOffsetX, y: content.bgOffsetY }
+      activeOffset = { x: persistedPage.content.bgOffsetX, y: persistedPage.content.bgOffsetY }
       isDraggingImage = true;
     }
   }
@@ -127,7 +124,7 @@
     
     if (tool === 'bg' && isDraggingImage && elmBg && elmBox && initPointerCoors) {
 
-      const initOffsetY = content.bgOffsetY / 100 * elmBg.clientHeight;
+      const initOffsetY = persistedPage.content.bgOffsetY / 100 * elmBg.clientHeight;
       const deltaY = y - initPointerCoors.y;
       const maxOffsetY = Math.max(0, (elmBg.clientHeight - elmBox.clientHeight) / 2);
       const newY = Math.max(-maxOffsetY, Math.min(initOffsetY + deltaY, maxOffsetY));
@@ -152,7 +149,7 @@
     } else if (tool === 'eraser') {
 
       let index = 0;
-      for (let stroke of content.strokes) {
+      for (let stroke of persistedPage.content.strokes) {
         // Scale stroke to match its original box size
         const scaleX = boxWidth / stroke.box.w;
         const scaleY = boxHeight / stroke.box.h;
@@ -167,9 +164,8 @@
     }
   }
 
-  function handlePointerUp(e: PointerEvent) { 
-    if (e.pointerId == mainPointer) finishGesture(); 
-  }
+  function handlePointerUp(e: PointerEvent) { if (e.pointerId == mainPointer) finishGesture(); }
+
 
   function finishGesture(cancelled: boolean = false) {
     if (!cancelled) {
@@ -177,12 +173,12 @@
         if (isClickAction) {
           selectBgPicture()
         } else {
-          updateContent({ bgOffset: activeOffset });
+          persistedPage.content = { bgOffset: activeOffset }
         }
       } else if (tool === 'eraser' && erasedStrokeIds.size > 0) {
-        updateContent({ strokes: content.strokes.filter((_, i) => !erasedStrokeIds.has(i)) });
+        persistedPage.content = { strokes: persistedPage.content.strokes.filter((_, i) => !erasedStrokeIds.has(i)) };
       } else if (tool === 'brush' && activeStroke) {
-        updateContent({ strokes: [...content.strokes, activeStroke], });
+        persistedPage.content = { strokes: [...persistedPage.content.strokes, activeStroke], };
       }
     }
 
@@ -198,35 +194,18 @@
   }
 
   export function undo() { 
-    history.undo() 
-    onchange?.(content);
-    reloadBgImage(content.bg ? base64ToBlob(content.bg) : undefined);
+    persistedPage.history.undo() 
+    reloadBgImage(persistedPage.content.bg ? base64ToBlob(persistedPage.content.bg) : undefined);
   }  
 
   export function redo() { 
-    history.redo();
-    onchange?.(content);
-    reloadBgImage(content.bg ? base64ToBlob(content.bg) : undefined);
+    persistedPage.history.redo();
+    reloadBgImage(persistedPage.content.bg ? base64ToBlob(persistedPage.content.bg) : undefined);
   }
 
   export async function clear() {
-    content = DEFAULT_CONTENT;
-    onchange?.(content);
+    persistedPage.resetContent();
     reloadBgImage(undefined);
-  }
-
-  export function getContent() { return content }
-
-
-  export function setContent(newContent: CanvasContent) {
-    history.log = [] // reset history
-    content = { 
-      strokes: newContent.strokes, 
-      bg: newContent.bg, 
-      bgOffsetX: newContent.bgOffsetX ?? 0, 
-      bgOffsetY: newContent.bgOffsetY ?? 0
-    };
-    reloadBgImage(content.bg ? base64ToBlob(content.bg) : undefined);
   }
 
   export function selectBgPicture() { elmInputBg?.click() }
@@ -340,20 +319,6 @@
     return d.join(" ")
   }
 
-  function updateContent(update: { 
-    strokes?: CanvasContent['strokes'], 
-    bg?: CanvasContent['bg'], 
-    bgOffset?: { x: number, y: number}
-  }) {
-    content = { 
-      strokes: update?.strokes ?? content.strokes, 
-      bg: update?.bg ?? content.bg, 
-      bgOffsetX: update.bgOffset?.x ?? content.bgOffsetX,
-      bgOffsetY: update.bgOffset?.y ?? content.bgOffsetY,
-    };
-    onchange?.(content);
-  }
-
   async function onPictureLoaded(e: Event & { currentTarget: EventTarget & HTMLInputElement; }) {
     e.preventDefault();
 
@@ -362,7 +327,7 @@
     const resized = await resizeImage(normalized[0]);
     const base64 = await fileToBase64(resized);
 
-    updateContent({ bg: base64, bgOffset: { x: DEFAULT_CONTENT.bgOffsetX, y: DEFAULT_CONTENT.bgOffsetY } })
+    persistedPage.content = ({ bg: base64, bgOffset: { x: 0, y: 0 } })
     reloadBgImage(resized);
 
     // clear input element
@@ -391,13 +356,6 @@
     if (locked) {
       untrack(() => finishGesture(true))
     }
-  });
-  $effect(() => {
-    history.log.length // trigger changes
-    untrack(() => {
-      canRedo = history.canRedo
-      canUndo = history.canUndo
-    })
   });
   
   onMount(() => {
@@ -443,12 +401,12 @@
 > 
   <img 
     bind:this={elmBg} alt=""
-    class:hidden={!content.bg}
+    class:hidden={!persistedPage.content.bg}
     class="absolute -z-1 top-1/2 left-1/2 will-change-transform min-w-full min-h-full object-cover"
-    style="transform: translate(-50%, -50%) translateY({isDraggingImage ? activeOffset.y : content.bgOffsetY}%);"
+    style="transform: translate(-50%, -50%) translateY({isDraggingImage ? activeOffset.y : persistedPage.content.bgOffsetY}%);"
   />
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {boxWidth} {boxHeight}">
-    {#each content.strokes as stroke, index}
+    {#each persistedPage.content.strokes as stroke, index}
       {#if stroke.points.length}
         <path
           d={getSvgPathFromStroke(stroke)} fill={stroke.color} 
