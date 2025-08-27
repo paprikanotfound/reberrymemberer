@@ -14,7 +14,7 @@
   let infoPageVisible = $state(false)
 
   const pindex = new PersistedState("pindex", 0);
-  // const pflipped = new PersistedState("pflipped", true);
+  const pflipped = new PersistedState("pflipped", true);
   onMount(() => {
     if (browser) {
       pindex.current = (Number(localStorage.getItem("pindex") ?? 0) + 1) % samples.length;
@@ -59,6 +59,10 @@
     >
     <Postcard
       class="size-full"
+      initSpin={pflipped.current ? 180 : 0}
+      onspin={(spin) => { 
+        pflipped.current = (Math.floor(Math.abs(spin) / 180) % 2) === 1; 
+      }}
       front={samples[pindex.current].front} 
       back={samples[pindex.current].back} 
     />
