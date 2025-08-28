@@ -1,16 +1,8 @@
 <script lang="ts">
+	import { clearPersistedPage } from "$lib/components/canvas-persisted-page.svelte";
 	import { m } from "$lib/paraglide/messages";
-	import { PersistedState } from "runed";
-
-  const pages = new PersistedState<any>("pages", { 
-    front: { strokes: [], bgOffsetX: 0, bgOffsetY: 0 }, 
-    back: { strokes: [], bgOffsetX: 0, bgOffsetY: 0 },
-  }, { storage: "session" });
-  pages.current = { 
-    front: { strokes: [], bgOffsetX: 0, bgOffsetY: 0 }, 
-    back: { strokes: [], bgOffsetX: 0, bgOffsetY: 0 },
-  }
-
+  clearPersistedPage("front")
+  clearPersistedPage("back")
 </script>
 
 <div class="p-4 flex flex-col">

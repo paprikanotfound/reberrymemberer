@@ -10,12 +10,18 @@ const DEFAULT_CONTENT = { strokes: [], bgOffsetX: 0, bgOffsetY: 0 }
 
 export type PersistedPage = ReturnType<typeof createPersistedPage>;
 
+
+export function clearPersistedPage(key: string) {
+  let page: PersistedState<CanvasContent> = new PersistedState<CanvasContent>(
+    key, DEFAULT_CONTENT, { storage: "local" });
+  page.current = DEFAULT_CONTENT
+}
+
+
 export function createPersistedPage(key: string) {
 
   let page: PersistedState<CanvasContent> = new PersistedState<CanvasContent>(
-    key, 
-    DEFAULT_CONTENT, 
-    { storage: "local" }
+    key, DEFAULT_CONTENT, { storage: "local" }
   );
   let history = new StateHistory(() => page.current, (c) => (page.current = c));
 
