@@ -15,7 +15,7 @@ export type Order = {
   created_at?: string; // ISO timestamp, optional on insert
 };
 
-export async function setOrderStatusPaid(
+export async function setOrderStatusAsPaidIfNotYet(
   db: D1Database, 
   email: Order['customer_email'], 
   paymentIntent: Order['stripe_payment_intent'], 
@@ -31,7 +31,7 @@ export async function setOrderStatusPaid(
   .first<Order>();
 }
 
-export async function setOrderProviderId(
+export async function setOrderAsConfirmedAndProviderId(
   db: D1Database, 
   provider_order_id: Order['provider_order_id'], 
   id: Order['id'],

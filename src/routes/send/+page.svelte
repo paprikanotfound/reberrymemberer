@@ -14,7 +14,9 @@
 	import Aspect from "$lib/components/aspect.svelte";
   import countries from '$lib/countries.json'
   import { dev, browser } from '$app/environment';
-	import { createPersistedPage } from "$lib/components/pagemanager.svelte";
+	import { createPersistedPage } from "$lib/components/canvas-persisted-page.svelte";
+	import { m } from "$lib/paraglide/messages";
+	import { createCanvasTools } from "$lib/components/canvas-persisted-tools.svelte";
 
   
   const DEFAULT_TOOLS_FRONT = {
@@ -73,21 +75,19 @@
   })
 
   let canvasInPenMode = $state(false)
-  let curCanvasTool = $state(DEFAULT_TOOLS_FRONT)
+  let toolsFront = createCanvasTools("front", DEFAULT_TOOLS_FRONT, ["bg","eraser","brush"], BRUSH_COLORS)
+  let toolsBack = createCanvasTools("back", DEFAULT_TOOLS_BACK, ["eraser","brush"], BRUSH_COLORS_TEXT)
+  let currentCanvasTool = $state(toolsFront)
 
 
   const onPrev = () => {
     const index = steps.indexOf(step);
     if (index > 0) loadStep(steps[index-1]);
   };
-  
   const onNext = () => {
     const index = steps.indexOf(step);
     if (index < steps.length - 1) loadStep(steps[index + 1]);
   };
-
-  onMount(async () => { loadStep(step); });
-
 
   async function loadStep(next: Step) {
     switch(next) {
@@ -98,11 +98,13 @@
       case 'front': {
         elmEditor?.resetZoom();
         currentPage = pageFront;
+        currentCanvasTool = toolsFront;
         break
       }
       case 'back': {
         elmEditor?.resetZoom();
         currentPage = pageBack;
+        currentCanvasTool = toolsBack;
         break
       }
       case 'address': {
@@ -152,6 +154,8 @@
     }
   }
 
+  onMount(async () => { loadStep(step); });
+
 </script>
 
 
@@ -159,7 +163,7 @@
   class:overflow-hidden={step !== "address"}
   class:overscroll-none={step !== "address"}
   class="relative w-full h-full select-none"
-  >
+>
   
   <div id="topbar" class="fixed top-0 left-0 w-full z-40 transform-none">
     <div id="nav" class="p-2 sm:p-4 leading-snug font-light relative flex justify-between gap-4 w-full bg-white shadow-xl shadow-white">
@@ -172,13 +176,13 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
           <path fill-rule="evenodd" d="M18 10a.75.75 0 0 1-.75.75H4.66l2.1 1.95a.75.75 0 1 1-1.02 1.1l-3.5-3.25a.75.75 0 0 1 0-1.1l3.5-3.25a.75.75 0 1 1 1.02 1.1l-2.1 1.95h12.59A.75.75 0 0 1 18 10Z" clip-rule="evenodd" />
         </svg>
-        Back
+        {m["nav.prev"]()}
       </button>
       <span class="">
         {#if step == "address"}
-          <button onclick={requestCheckoutLink}>Checkout</button>
+          <button onclick={requestCheckoutLink}>{m["nav.checkout"]()}</button>
         {:else}
-          <button onclick={onNext}>Next</button>
+          <button onclick={onNext}>{m["nav.next"]()}</button>
         {/if}
       </span>
     </div>
@@ -200,7 +204,7 @@
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
         <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
       </svg>
-      Exit pen mode
+      {m["button.exit_pen_mode"]()}
     </button>
   </div>
 
@@ -223,8 +227,8 @@
           bind:this={elmCanvas}
           bind:inPenMode={canvasInPenMode}
           bind:persistedPage={currentPage}
-          tool={curCanvasTool.tool}
-          opts={{ color: curCanvasTool.color, size: curCanvasTool.size }}
+          tool={currentCanvasTool.tool}
+          opts={{ color: currentCanvasTool.color, size: currentCanvasTool.size }}
           aspect={`${POSTCARD.size.w}/${POSTCARD.size.h}`}
           locked={isPanningZooming}
           class="size-full border-[.5px] border-black/50 "
@@ -234,32 +238,28 @@
           class:hidden={step!=="back"} 
           class="absolute top-0 left-0 w-full h-full z-[2000] pointer-events-none">
           <div id="address-area" class="pointer-events-auto select-none cursor-default absolute border-l-[.5px] border-t-[.5px] _bg-white w-[42.37%] h-[79.16%] right-0 top-0 z-2 flex items-center justify-center">
-            <p class="text-[8px] sm:text-sm p-1">Firstname Lastname<br>Street 123<br>1234 AB PLACE</p>
+            <p class="text-[8px] sm:text-sm p-1 whitespace-pre-line">{m["address.placeholder"]()}</p>
           </div>
           <div id="barcode-area" class="pointer-events-auto select-none cursor-default absolute border-l-[.5px] border-t-[.5px] _bg-white w-[93.21%] h-[20.84%] right-0 bottom-0 z-2 flex items-center justify-center">
             <p class="text-[8px] sm:text-sm p-1">
-              Please leave this area clear for postal service barcodes.
+              {m["barcode.notice"]()}
             </p>
           </div>
           <img id="stamp" src="/stamp.png" alt="stamp" class="absolute top-2 right-0 h-15 sm:h-30 object-contain z-10" />
         </div>
         <div id="bleed" class="absolute top-0 left-0 p-[2%] size-full z-10 pointer-events-none">
-          <div class="size-full border-[1px] _border-dashed border-red-600"></div>
+          <div class="size-full border-[1px] border-red-600"></div>
         </div>
       </Aspect>
     {/snippet}
   </Editor>
 
   <CanvasToolbar
-    key={step == "front" ? "tools-front" : "tools-back" } 
-    initValue={step == "front" ? DEFAULT_TOOLS_FRONT : DEFAULT_TOOLS_BACK}
-    tools={step == "front" ? ["bg","eraser","brush"] : ["eraser","brush"]}
+    canvasTools={currentCanvasTool}
     onchange={(props) => { 
-      curCanvasTool = props;
       // reset zoom
       if (props.tool == "bg") {
         elmEditor?.resetZoom() 
-        // elmCanvas?.selectBgPicture()
       }
     }}
     onundo={() => elmCanvas?.undo()}
@@ -267,24 +267,20 @@
     onclear={() => elmCanvas?.clear()}
     canUndo={currentPage.canUndo}
     canRedo={currentPage.canRedo}
-    colors={step == "front" ? BRUSH_COLORS : BRUSH_COLORS_TEXT}
     data-hide={step == "address"}
     class="data-[hide='true']:hidden"
   />
 
-  <div id="page-details"
-    class:hidden={step !== "address"}
-    class="px-3 sm:px-4 py-20"
-  >
+  <div id="page-details" class:hidden={step !== "address"} class="px-3 sm:px-4 py-20">
     <div class="flex flex-col w-full gap-y-12">
       <form id="section-0" class="w-full flex flex-col lg:grid lg:grid-cols-2">
         <div class="flex gap-8 mb-3">
           <span>001</span>
-          <span>From</span>
+          <span>{m["section.from"]()}</span>
         </div>
         <div id="fields" class="flex flex-col gap-2">
           <label>
-            Name:
+            {m["field.name"]()}
             <input
               type="text"
               name="sender.name"
@@ -298,7 +294,7 @@
             {/if}
           </label>
           <label>
-            Address:
+            {m["field.address"]()}
             <input
               type="text"
               name="sender.address"
@@ -312,7 +308,7 @@
             {/if}
           </label>
           <label>
-            Address (2):
+            {m["field.address2"]()}
             <input
               type="text"
               name="sender.addressLine2"
@@ -325,7 +321,7 @@
             {/if}
           </label>
           <label>
-            Postal Code:
+            {m["field.postal_code"]()}
             <input
               type="text"
               name="sender.postalCode"
@@ -339,7 +335,7 @@
             {/if}
           </label>
           <label>
-            City:
+            {m["field.city"]()}
             <input
               type="text"
               name="sender.city"
@@ -353,13 +349,13 @@
             {/if}
           </label>
           <label>
-            Country:
+            {m["field.country"]()}
             <select bind:value={sender.country} 
               name="sender.country"
               required class="input" 
               autocomplete="section-sender country"
               >
-              <option value="">Select country</option>
+              <option value="">{m["field.select_country"]()}</option>
               {#each countries as ctr }
                 <option value="{ctr.iso31661Alpha2}">{ctr.englishName}</option>                
               {/each}
@@ -382,11 +378,11 @@
       <form id="section-1" class="w-full flex flex-col lg:grid lg:grid-cols-2">
         <div class="flex gap-8 mb-3">
           <span>002</span>
-          <span>To</span>
+          <span>{m["section.to"]()}</span>
         </div>
         <div id="fields" class="flex flex-col gap-2">
           <label>
-            Name:
+            {m["field.name"]()}
             <input
               type="text"
               bind:value={recipient.name}
@@ -400,7 +396,7 @@
             {/if}
           </label>
           <label>
-            Address:
+            {m["field.address"]()}
             <input
               type="text"
               bind:value={recipient.address}
@@ -414,7 +410,7 @@
             {/if}
           </label>
           <label>
-            Address (2):
+            {m["field.address2"]()}
             <input
               type="text"
               bind:value={recipient.addressLine2}
@@ -427,7 +423,7 @@
             {/if}
           </label>
           <label>
-            Postal Code:
+            {m["field.postal_code"]()}
             <input
               type="text"
               bind:value={recipient.postalCode}
@@ -441,7 +437,7 @@
             {/if}
           </label>
           <label>
-            City:
+            {m["field.city"]()}
             <input
               type="text"
               bind:value={recipient.city}
@@ -455,14 +451,14 @@
             {/if}
           </label>
           <label>
-            Country:
+            {m["field.country"]()}
             <select 
               bind:value={recipient.country} required 
               name="receiver.country"
               class="input" 
               autocomplete="section-receiver country"
               >
-              <option value="">Select country</option>
+              <option value="">{m["field.select_country"]()}</option>
               {#each countries as ctr }
                 <option value="{ctr.iso31661Alpha2}">{ctr.englishName}</option>                
               {/each}
@@ -485,15 +481,14 @@
       <div id="section-2" class="flex flex-col lg:grid lg:grid-cols-2">
         <div class="flex gap-8 mb-3">
           <span>003</span>
-          <span>Schedule</span>
+          <span><span>{m["section.schedule"]()}</span></span>
         </div>
         <div class="flex flex-col gap-2">
-          <p>Notice: All postcards are sent from the Netherlands via priority mail by PostNL.
-          (<a href="https://www.postnl.nl/api/assets/blt43aa441bfc1e29f2/blt6d6203f1afe9f9aa/68199ff00c47c367afd62823/20250501-brochure-international-delivery-times.pdf" target="_blank" rel="noopener noreferrer">
-            Delivery times
-          </a>)</p>
+          <p>{m.notice_send_date()}
+          (<a href="{POSTCARD.url_delivery_times}" target="_blank" rel="noopener noreferrer">{m.delivery_times()}</a> →)
+          </p>
           <label>
-            Send Date:
+            {m.send_date()}
             <input bind:this={dateInput} type="date" id="date" bind:value={sendDate} min={today} class="w-fit flex-none cursor-text" />
           </label>
         </div>

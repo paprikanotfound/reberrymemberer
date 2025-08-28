@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { m } from "$lib/paraglide/messages";
 	import { PersistedState } from "runed";
 
   const pages = new PersistedState<any>("pages", { 
@@ -13,6 +14,6 @@
 </script>
 
 <div class="p-4 flex flex-col">
-  <span>(<a href="/">Back</a>)</span>
-  <span>✈︎✉︎ Thank you for your purchase!</span>
+  <span>(<a href="/">{m.close()}</a>)</span>
+  <span>{m.thank_you()}</span>
 </div>

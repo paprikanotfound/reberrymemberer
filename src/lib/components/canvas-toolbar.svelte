@@ -1,49 +1,35 @@
 <script lang="ts">
-	import { PersistedState } from "runed";
 	import BrushProps from "./brush-props.svelte";
 	import { BRUSH_SIZES, type CanvasTool } from "./canvas.types";
-	import { onMount, untrack } from "svelte";
+	import { untrack } from "svelte";
+	import type { PersistedCanvasTools } from "./canvas-persisted-tools.svelte";
 
   type Props = {
-    key: string;
-		tools: CanvasTool[];
-		initValue: { tool: CanvasTool; color: string; size: number };
+		canvasTools: PersistedCanvasTools;
 		onchange?: (props: { tool: CanvasTool; color: string; size: number }) => void;
 		onundo?: () => void;
 		onredo?: () => void;
 		onclear?: () => void;
 		canUndo?: boolean;
 		canRedo?: boolean;
-		colors: string[];
     class?: string;
     [key: string]: any;
   };
 
   let { 
-		key, tools, initValue, canRedo, canUndo,
+		canvasTools, canRedo, canUndo,
 		onchange, onundo, onredo, onclear, 
-		colors,
 		class: classes, ...restProps 
 	}: Props = $props();
-	let loaded = $state(false)
 
-	const tool = $derived(new PersistedState(`${key}-tool`, initValue.tool))
-	const size = $derived(new PersistedState(`${key}-size`, initValue.size))
-	const color = $derived(new PersistedState(`${key}-color`, initValue.color))
-	
 	$effect(() => { 
-		// notify changes
 		const updated = { 
-			tool: tool.current, 
-			size: size.current, 
-			color: color.current 
+			tool: canvasTools.tool, 
+			size: canvasTools.size, 
+			color: canvasTools.color,
 		};
 		untrack(() => { onchange?.(updated); });
 	});
-
-	// onMount(() => {
-	// 	loaded = true
-	// })
 
 </script>
 
@@ -58,22 +44,19 @@
 >
 	<div id="actions" class="flex">
 		<button onclick={() => { onundo?.() }} disabled={!canUndo} aria-label="undo" 
-			class="p-3 hover:bg-black/10 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
-			>
+			class="p-3 hover:bg-black/10 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">
 			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
 			</svg>
 		</button>
 		<button onclick={() => { onredo?.() }} disabled={!canRedo} aria-label="redo" 
-			class="p-3 hover:bg-black/10 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
-			>
+			class="p-3 hover:bg-black/10 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">
 			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
 				<path stroke-linecap="round" stroke-linejoin="round" d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3" />
 			</svg>
 		</button>
 		<button onclick={() => { onclear?.() }} aria-label="clear" 
-			class="p-3 hover:bg-black/10 rounded-lg"
-			>
+			class="p-3 hover:bg-black/10 rounded-lg">
 			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
 				<path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
 			</svg>
@@ -82,9 +65,9 @@
 	<div class="h-8 w-[.5px] bg-zinc-300"></div>
 	<div id="tool" class="flex">
 		<button id="bg" 
-			onclick={() => { tool.current = "bg" }} aria-label="bg" 
-			class:hidden={!tools.includes("bg")}	
-			data-selected={tool.current=="bg"} 
+			onclick={() => { canvasTools.tool = "bg" }} aria-label="bg" 
+			class:hidden={!canvasTools.options.includes("bg")}	
+			data-selected={canvasTools.tool=="bg"} 
 			class="p-3 hover:bg-black/5 active:bg-black/15 data-[selected='true']:bg-black/10 rounded-lg outline-0"
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
@@ -92,9 +75,9 @@
 			</svg>
 		</button>
 		<button id="eraser"
-			onclick={() => { tool.current = "eraser" }} aria-label="bg" 
-			class:hidden={!tools.includes("eraser")}	
-			data-selected={tool.current=="eraser"} 
+			onclick={() => { canvasTools.tool = "eraser" }} aria-label="bg" 
+			class:hidden={!canvasTools.options.includes("eraser")}	
+			data-selected={canvasTools.tool=="eraser"} 
 			class="p-3 hover:bg-black/5 active:bg-black/15 data-[selected='true']:bg-black/10 rounded-lg outline-0"
 		>
 			<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-width="1.5" class="size-4">
@@ -102,9 +85,9 @@
 			</svg>
 		</button>
 		<button id="brush"
-			onclick={() => { tool.current = "brush" }} aria-label="bg" 
-			class:hidden={!tools.includes("brush")}	
-			data-selected={tool.current=="brush"} 
+			onclick={() => { canvasTools.tool = "brush" }} aria-label="bg" 
+			class:hidden={!canvasTools.options.includes("brush")}	
+			data-selected={canvasTools.tool=="brush"} 
 			class="p-3 hover:bg-black/5 active:bg-black/15 data-[selected='true']:bg-black/10 rounded-lg outline-0"
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
@@ -114,9 +97,9 @@
 	</div>
 	<div class="h-8 w-[.5px] bg-zinc-300"></div>
 	<BrushProps 
-		bind:color={color.current} 
-		bind:size={size.current} 
-		colors={colors}
+		bind:color={canvasTools.color} 
+		bind:size={canvasTools.size} 
+		colors={canvasTools.colors}
 		sizes={BRUSH_SIZES}
 	>
 		<div id="brush" class="p-3 hover:bg-black/10 active:bg-black/15 rounded-lg">

@@ -5,7 +5,7 @@
 	import { resizeImage } from '$lib/utils/utils.image';
 	import { base64ToBlob, fileToBase64, normalizeFiles } from '$lib/utils/utils.file';
 	import { SvelteSet } from 'svelte/reactivity';
-	import type { PersistedPage } from './pagemanager.svelte';
+	import type { PersistedPage } from './canvas-persisted-page.svelte';
 
 
   interface Props {

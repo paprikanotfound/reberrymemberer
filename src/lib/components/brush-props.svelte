@@ -15,7 +15,6 @@
 
   let { color=$bindable(), onopen, size=$bindable(), colors, sizes, children }: Props = $props();
   let open = $state(false);
-
 </script>
 
 

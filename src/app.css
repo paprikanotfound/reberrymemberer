@@ -6,7 +6,7 @@
 
 @layer base {
 	html, body {
-		@apply size-full antialiased;
+		@apply size-full antialiased; /* beautify text */
 	}
 	body {
 		@apply text-base sm:text-[17px];
@@ -52,14 +52,10 @@
 }
 
 /* beautify text */
-body {
-	text-rendering: optimizeLegibility;
-}
+body { text-rendering: optimizeLegibility; }
 
 /* disable mobile tap zoom, etc */
-html, body {
-  touch-action: manipulation;
-}
+html, body { touch-action: manipulation; }
 
 /* postard canvas-like grid  */
 .grid-overlay {

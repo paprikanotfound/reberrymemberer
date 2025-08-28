@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import Postcard from "$lib/components/postcard.svelte";
+	import { m } from "$lib/paraglide/messages";
 	import { POSTCARD } from "$lib/types";
 	import { PersistedState } from "runed";
 	import { onMount } from "svelte";
@@ -11,42 +12,33 @@
     { front: "./IMG_3423front.jpg", back: "./back4.jpg"}
   ]
   
-  let infoPageVisible = $state(false)
-
+  let infoPageVisible = $state(false);
   const pindex = new PersistedState("pindex", 0);
   const pflipped = new PersistedState("pflipped", true);
+  
   onMount(() => {
     if (browser) {
       pindex.current = (Number(localStorage.getItem("pindex") ?? 0) + 1) % samples.length;
     }
   });
-
 </script>
 
 <div class="p-3 sm:p-4 w-full h-full relative aspect-container">
   <div id="info" class:hidden={!infoPageVisible} class="flex-1 w-full flex flex-col items-start gap-8">
     <span>
-      (<button class="hover:underline" onclick={() => { infoPageVisible = false }}>Close</button>)
+      (<button class="hover:underline" onclick={() => { infoPageVisible = false }}>{m.close()}</button>)
     </span>
     <section class="_max-w-2xl leading-tight">
-      <p class="leading-tight">
-        Reberrymemberer – A small postal experiment for thoughts too soft for the internet and too fleeting for a full letter. 
-        Send a postcard to someone far, to someone you miss, to your future self. Send a message the moment it comes, before it fades. 
+      <p class="leading-tight">{m.intro_paragraph()}</p>
+      <br>
+      <p>{m.postcard_details({ cost_label: POSTCARD.cost_label })}</p>
+      <p>
+        {m.shipping_info()}
+        (<a href="{POSTCARD.url_delivery_times}" target="_blank" rel="noopener noreferrer">{m.delivery_times()}</a> →)
       </p>
       <br>
-      <p>
-        {POSTCARD.cost_label}, A6, printed in the Netherlands, worldwide delivery.  
-      </p>
-      <p>
-        Sent via priority mail by PostNL – Dutch Postal Services. 
-        (<a href="https://www.postnl.nl/api/assets/blt43aa441bfc1e29f2/blt6d6203f1afe9f9aa/68199ff00c47c367afd62823/20250501-brochure-international-delivery-times.pdf" target="_blank" rel="noopener noreferrer">
-          Delivery times
-        </a> →)
-      </p>
-      <br>
-      <!-- <p class="text-sm">Inspired by <a href="https://www.youtube.com/results?search_query=drop+nineteens+kick+the+tragedy" class="italic">Drop Nineteens - Kick The Tragedy</a></p> -->
-      <p class="text-sm">Photography <a href="https://instagram.com/hoyeonwang/" target="_blank" class="italic">Wang Hoyeon</a></p>
-      <p class="text-sm">Design & development <a href="https://paprika.fyi" target="_blank" class="italic">Paprika®</a></p>
+      <p class="text-sm">{m.credit_photography()} <a href="https://instagram.com/hoyeonwang/" target="_blank" class="italic">Wang Hoyeon</a></p>
+      <p class="text-sm">{m.credit_design()} <a href="https://paprika.fyi" target="_blank" class="italic">Paprika®</a></p>
     </section>
   </div> 
   <div id="postcard" class:hidden={infoPageVisible}
@@ -67,9 +59,9 @@
       back={samples[pindex.current].back} 
     />
     <div class="flex flex-col gap-2">
-      <span class="self-center leading-none _text-center">Reberrymemberer – A small postal experiment.</span>
+      <span class="self-center leading-none _text-center">{m.tagline()}</span>
       <div class="w-full flex gap-1 justify-center items-center leading-none">
-        <a href="/send">Write</a> – <button onclick={() => { infoPageVisible = !infoPageVisible }}>Info</button>
+        <a href="/send">{m.write()}</a> – <button onclick={() => { infoPageVisible = !infoPageVisible }}>{m.info()}</button>
       </div>
     </div>
   </div>

@@ -1,41 +1,19 @@
 import { createPrintOneOrder, type AddressDetails, type OrderRequestPayload } from "$lib/api.printone.server.js";
-import { setOrderCancelledFraud, setOrderFailedPayment, setOrderProviderId, setOrderRefundedError, setOrderStatusPaid } from "$lib/db.server";
+import { setOrderCancelledFraud, setOrderFailedPayment, setOrderAsConfirmedAndProviderId, setOrderRefundedError, setOrderStatusAsPaidIfNotYet } from "$lib/db.server";
 import { error } from "@sveltejs/kit";
 import Stripe from "stripe"
 
 
-/* const getCryptoProvider = () => {
-  const encoder = new TextEncoder();
-  return {
-    computeHMACSignatureAsync: async (payload: string, secret: string) => {
-      const key = await crypto.subtle.importKey(
-        'raw',
-        encoder.encode(secret),
-        { name: 'HMAC', hash: 'SHA-256' },
-        false,
-        ['sign']
-      );
-
-      const signature = await crypto.subtle.sign(
-        'HMAC',
-        key,
-        encoder.encode(payload)
-      );
-
-      // Convert ArrayBuffer to hex string
-      return [...new Uint8Array(signature)]
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-    }
-  } as Stripe.CryptoProvider;
-} */
-
 export async function POST({platform, request, url, fetch}) {
+  /**
+   * requires node:crypto w/ nodejs_compat flag in cf worker to be enabled.
+   * https://developers.cloudflare.com/workers/runtime-apis/nodejs/crypto/
+   * 
+   */
   const stripeSignSecret = platform!.env.STRIPE_API_SIGN_SECRET;
   const stripe = new Stripe(platform!.env.STRIPE_API_SECRET, { apiVersion: '2025-06-30.basil' })
   const rawBody = await request.text();
   const signature = request.headers.get('stripe-signature');
-  // const event = await stripe.webhooks.constructEventAsync(rawBody, signature!, stripeSignSecret, undefined, getCryptoProvider())
   const event = await stripe.webhooks.constructEventAsync(rawBody, signature!, stripeSignSecret)
   if (!event) return error(500, "Stripe signature is not valid")
   
@@ -44,7 +22,7 @@ export async function POST({platform, request, url, fetch}) {
   const fulfillOrder = async (session: Stripe.Response<Stripe.Checkout.Session>)  => {
     try {
       // update order status
-      const order = await setOrderStatusPaid(db, 
+      const order = await setOrderStatusAsPaidIfNotYet(db, 
         session.customer_email, session.payment_intent!.toString(), session.client_reference_id!)
       if (!order) {
         console.error('Order already fullfilled or not found!', session.client_reference_id)
@@ -70,7 +48,7 @@ export async function POST({platform, request, url, fetch}) {
       const orderPrint = await createPrintOneOrder(apiKey, apiUrl, payload);
 
       // update order details
-      const result = await setOrderProviderId(db, orderPrint.id, order.id)
+      const result = await setOrderAsConfirmedAndProviderId(db, orderPrint.id, order.id)
       if (result.meta.changes == 0) {
         console.error('Failed to update order with provider id!', order.id);
         return
