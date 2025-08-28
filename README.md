@@ -23,6 +23,6 @@ npx wrangler d1 execute untogether-db --local --file=./local.queries.sql
 [Secrets on deployed Workers](https://developers.cloudflare.com/workers/configuration/secrets/#adding-secrets-to-your-project)
 
 ```
-npx wrangler pages secret put <KEY>
-npx wrangler pages versions secret put <KEY>
+npx wrangler secret put <KEY>
+npx wrangler versions secret put <KEY>
 ```

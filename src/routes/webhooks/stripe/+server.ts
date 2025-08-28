@@ -4,7 +4,7 @@ import { error } from "@sveltejs/kit";
 import Stripe from "stripe"
 
 
-const getCryptoProvider = () => {
+/* const getCryptoProvider = () => {
   const encoder = new TextEncoder();
   return {
     computeHMACSignatureAsync: async (payload: string, secret: string) => {
@@ -28,14 +28,15 @@ const getCryptoProvider = () => {
         .join('');
     }
   } as Stripe.CryptoProvider;
-}
+} */
 
 export async function POST({platform, request, url, fetch}) {
   const stripeSignSecret = platform!.env.STRIPE_API_SIGN_SECRET;
   const stripe = new Stripe(platform!.env.STRIPE_API_SECRET, { apiVersion: '2025-06-30.basil' })
-  const sign = request.headers.get('stripe-signature') as string
-  const body = await request.text()
-  const event = await stripe.webhooks.constructEventAsync(body, sign, stripeSignSecret, undefined, getCryptoProvider())
+  const rawBody = await request.text();
+  const signature = request.headers.get('stripe-signature');
+  // const event = await stripe.webhooks.constructEventAsync(rawBody, signature!, stripeSignSecret, undefined, getCryptoProvider())
+  const event = await stripe.webhooks.constructEventAsync(rawBody, signature!, stripeSignSecret)
   if (!event) return error(500, "Stripe signature is not valid")
   
   const db = platform!.env.DB
@@ -85,6 +86,10 @@ export async function POST({platform, request, url, fetch}) {
   }
 
   switch (event.type) {
+    case 'checkout.session.expired': {
+      // TODO set order expired
+      break
+    }
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
       const sessionWithLineItems = await stripe.checkout.sessions.retrieve(

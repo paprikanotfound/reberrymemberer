@@ -6,7 +6,10 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "reberrymemberer",
 	"main": ".svelte-kit/cloudflare/_worker.js",
-	"compatibility_date": "2025-07-15",
+	"compatibility_flags": [
+    "nodejs_compat"
+  ],
+	"compatibility_date": "2025-08-15",
 	"assets": {
 		"binding": "ASSETS",
 		"directory": ".svelte-kit/cloudflare"
