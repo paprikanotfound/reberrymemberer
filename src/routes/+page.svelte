@@ -7,7 +7,8 @@
 	import { onMount } from "svelte";
 
   const samples = [
-    { front: "./IMG_3423front.jpg", back: "./back2.jpg"},
+    { front: "./IMG_3423front.jpg", back: "./back1.jpg"},
+    // { front: "./IMG_3423front.jpg", back: "./back2.jpg"},
     { front: "./IMG_3423front.jpg", back: "./back3.jpg"},
     { front: "./IMG_3423front.jpg", back: "./back4.jpg"}
   ]
@@ -31,16 +32,17 @@
     <section class="leading-tight">
       <p>{m.intro_paragraph()}</p>
       <br>
-      <p>{m.postcard_details({ cost_label: POSTCARD.cost_label })}</p>
-      <p>
-        {m.shipping_info()}
-        (<a href="{POSTCARD.url_delivery_times}" target="_blank" rel="noopener noreferrer">{m.delivery_times()}</a> →)
-      </p>
       <br>
+      <p class="text-sm">{m.details()}</p>
+      <p class="text-sm">{m.postcard_details({ cost_label: POSTCARD.cost_label })}</p>
+      <p class="text-sm">{m.shipping_info()} (<a href="{POSTCARD.url_delivery_times}" target="_blank" rel="noopener noreferrer">{m.delivery_times()}</a> →)</p>
+      <br>
+      <p class="text-sm">{m.credits()}</p>
       <p class="text-sm">{m.credit_photography()} <a href="https://instagram.com/hoyeonwang/" target="_blank" class="italic">Wang Hoyeon</a></p>
       <p class="text-sm">{m.credit_design()} <a href="https://paprika.fyi" target="_blank" class="italic">Paprika®</a></p>
       <br>
-      <p class="text-sm">{m.credit_contact()} <span class="italic"><a href="mailto:support@paprika.fyi" target="_blank" class="italic">support(at)paprika.fyi</a></span></p>
+      <p class="text-sm">{m.credit_contact()}</p>
+      <p class="text-sm"><span class="italic"><a href="mailto:support@paprika.fyi" target="_blank" class="italic">support(at)paprika.fyi</a></span></p>
     </section>
   </div> 
   <div id="postcard" class:hidden={infoPageVisible}
