@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { detectLocale } from '$lib/i18';
+	import { setLocale } from '$lib/paraglide/runtime';
 	import '../app.css';
-	// import { setLocale, getLocale } from '$lib/paraglide/runtime';
 	let { children } = $props();
-	// setLocale("");
+	const loc = detectLocale()
+	setLocale(detectLocale());
 </script>
-<!-- {getLocale()} -->
 {@render children()}
