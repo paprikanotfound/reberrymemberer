@@ -14,7 +14,7 @@
   
   let infoPageVisible = $state(false);
   const pindex = new PersistedState("pindex", 0);
-  const pflipped = new PersistedState("pflipped", true);
+  const pflipped = new PersistedState("pflipped", false);
   
   onMount(() => {
     if (browser) {
