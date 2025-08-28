@@ -1,10 +1,10 @@
 import { browser } from '$app/environment'
 
 export const defaultLocale = 'en'
-export const supported = ["en", "kr"] as const;
+export const supported = ["en", "kr"];
 
 function toSupported(tag: string): (typeof supported)[number] {
-  const t = tag.toLowerCase().replace("_", "-"); // e.g. "ko-kr"
+  const t = tag.toLowerCase().replace("_", "-");
   // direct match first
   if (supported.includes(t as any)) return t as any;
 

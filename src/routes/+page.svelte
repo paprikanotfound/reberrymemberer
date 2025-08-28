@@ -28,8 +28,8 @@
     <span>
       (<button class="hover:underline" onclick={() => { infoPageVisible = false }}>{m.close()}</button>)
     </span>
-    <section class="_max-w-2xl leading-tight">
-      <p class="leading-tight">{m.intro_paragraph()}</p>
+    <section class="leading-tight">
+      <p>{m.intro_paragraph()}</p>
       <br>
       <p>{m.postcard_details({ cost_label: POSTCARD.cost_label })}</p>
       <p>
@@ -39,6 +39,8 @@
       <br>
       <p class="text-sm">{m.credit_photography()} <a href="https://instagram.com/hoyeonwang/" target="_blank" class="italic">Wang Hoyeon</a></p>
       <p class="text-sm">{m.credit_design()} <a href="https://paprika.fyi" target="_blank" class="italic">Paprika®</a></p>
+      <br>
+      <p class="text-sm">{m.credit_contact()} <span class="italic"><a href="mailto:support@paprika.fyi" target="_blank" class="italic">support(at)paprika.fyi</a></span></p>
     </section>
   </div> 
   <div id="postcard" class:hidden={infoPageVisible}
