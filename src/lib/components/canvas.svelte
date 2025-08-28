@@ -50,6 +50,7 @@
   let activeStroke: Stroke|undefined = $state();
   let erasedStrokeIds = new SvelteSet();
   
+  let blockReloadBg = false;
   let isDraggingImage = $state(false);
   let activeOffset = $state({ x: 0, y: 0 });
 
@@ -193,6 +194,7 @@
     isClickAction = false;
   }
 
+
   export function undo() { 
     persistedPage.history.undo() 
     reloadBgImage(persistedPage.content.bg ? base64ToBlob(persistedPage.content.bg) : undefined);
@@ -208,7 +210,9 @@
     reloadBgImage(undefined);
   }
 
-  export function selectBgPicture() { elmInputBg?.click() }
+  export function selectBgPicture() { 
+    elmInputBg?.click() 
+  }
 
   
   function areStrokesIntersecting(aPoints: Point[], sizeA: number, scaleA: number, bPoints: Point[], sizeB: number): boolean {
@@ -327,11 +331,15 @@
     const resized = await resizeImage(normalized[0]);
     const base64 = await fileToBase64(resized);
 
+    blockReloadBg = true
+
     persistedPage.content = ({ bg: base64, bgOffset: { x: 0, y: 0 } })
     reloadBgImage(resized);
 
     // clear input element
     if (elmInputBg) elmInputBg.value = ''
+
+    setTimeout(() => { blockReloadBg = false });
   }
 
   function reloadBgImage(image: File|Blob|undefined) {
@@ -353,6 +361,17 @@
   }
   
   $effect(() => {
+    if (persistedPage.content.bg) {
+      untrack(() => {
+        if (persistedPage.content.bg && !blockReloadBg) {
+          const base64 = base64ToBlob(persistedPage.content.bg)
+          reloadBgImage(base64);
+        }
+      })
+    }
+  });
+
+  $effect(() => {
     if (locked) {
       untrack(() => finishGesture(true))
     }
@@ -362,6 +381,9 @@
     elmBox?.addEventListener('pointerdown', handlePointerDown, { passive: false });
     elmBox?.addEventListener('pointermove', handlePointerMove, { passive: false });
     window.addEventListener('pointerup', handlePointerUp);
+
+
+
     return () => {
       elmBox?.removeEventListener('pointerdown', handlePointerDown);
       elmBox?.removeEventListener('pointermove', handlePointerMove);
@@ -376,9 +398,9 @@
   bind:this={elmInputBg}
   onchange={(e) => onPictureLoaded(e)}
   type="file" 
-  accept={'.jpg, .jpeg, .png, .webp'}
+  accept="image/jpeg,image/png,image/webp"
   multiple={false} 
-  class="hidden"
+  hidden
 />
 
 <div

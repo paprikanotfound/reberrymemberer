@@ -1,7 +1,8 @@
 import { browser } from '$app/environment'
 
 export const defaultLocale = 'en'
-export const supported = ["en", "kr"];
+export const supported: ("en"|"kr")[] = ["en", "kr"];
+
 
 function toSupported(tag: string): (typeof supported)[number] {
   const t = tag.toLowerCase().replace("_", "-");

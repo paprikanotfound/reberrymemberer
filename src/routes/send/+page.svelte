@@ -17,6 +17,7 @@
 	import { createPersistedPage } from "$lib/components/canvas-persisted-page.svelte";
 	import { m } from "$lib/paraglide/messages";
 	import { createCanvasTools } from "$lib/components/canvas-persisted-tools.svelte";
+	import { toast } from "svelte-sonner";
 
   
   const DEFAULT_TOOLS_FRONT = {
@@ -131,6 +132,8 @@
         backSize: pageBackImg.size,
       }));
 
+      console.log(result)
+
       await Promise.allSettled([
         uploadContent(result.url_front, pageFrontImg),
         uploadContent(result.url_back, pageBackImg),
@@ -150,6 +153,7 @@
         return
       }
       console.log(error)
+      toast.error(`${error}`);
       //TODO toast error
     }
   }
