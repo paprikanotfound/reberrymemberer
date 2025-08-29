@@ -5,7 +5,7 @@
   clearPersistedPage("back")
 </script>
 
-<div class="p-4 flex flex-col">
+<div class="p-4 flex flex-col gap-4">
   <span>(<a href="/">{m.close()}</a>)</span>
   <span>{m.thank_you()}</span>
 </div>

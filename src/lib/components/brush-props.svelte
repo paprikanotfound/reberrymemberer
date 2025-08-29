@@ -9,16 +9,23 @@
     colors: string[];
     sizes: typeof BRUSH_SIZES;
 		children: Snippet;
-		onopen?: (open: boolean) => void;
+		onchange?: (color: string, size: number) => void;
     [key: string]: any;
   };
 
-  let { color=$bindable(), onopen, size=$bindable(), colors, sizes, children }: Props = $props();
+  let { 
+		color=$bindable(), 
+		size=$bindable(), 
+		onchange, 
+		colors, 
+		sizes, 
+		children, 
+	}: Props = $props();
   let open = $state(false);
 </script>
 
 
-<Popover.Root bind:open onOpenChange={(open) => onopen?.(open) }>
+<Popover.Root bind:open>
 	<Popover.Trigger>
 		{@render children()}
 	</Popover.Trigger>
@@ -33,7 +40,11 @@
 		<div id="size" class="grid grid-cols-5">
 			{#each sizes as sizeOpt }	
 				<button 
-					onclick={() => { size = sizeOpt.size }} aria-label="bg" 
+					onclick={() => { 
+						size = sizeOpt.size;
+						onchange?.(color, size);
+					}} 
+					aria-label="bg" 
 					data-selected={sizeOpt.size == size}
 					class="p-2 hover:bg-black/10 data-[selected='true']:bg-black/20 rounded-lg text-sm font-bold font-sans outline-0"
 				>
@@ -44,7 +55,11 @@
 		<div id="color" class="grid grid-cols-5">
 			{#each colors as colorOpt }	
 				<button 
-					onclick={() => { color = colorOpt; }} aria-label="bg" 
+					onclick={() => { 
+						color = colorOpt;
+						onchange?.(color, size);
+					}} 
+					aria-label="bg" 
 					data-selected={colorOpt == color}
 					class="p-2 hover:bg-black/10 data-[selected='true']:bg-black/20 rounded-lg flex justify-center items-center outline-0"
 				>

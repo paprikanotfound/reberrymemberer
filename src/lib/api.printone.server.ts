@@ -57,11 +57,7 @@ export async function createPrintOneOrder(apiKey: string, apiUrl: string, payloa
     body: JSON.stringify(payload)
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to send order: ${response.status} ${errorText}`);
-  }
-
   const data: OrderResponse = await response.json();
-  return data
+  
+  return { response, data }
 }

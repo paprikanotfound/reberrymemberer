@@ -1,12 +1,12 @@
 <script lang="ts">
 	import BrushProps from "./brush-props.svelte";
 	import { BRUSH_SIZES, type CanvasTool } from "./canvas.types";
-	import { untrack } from "svelte";
 	import type { PersistedCanvasTools } from "./canvas-persisted-tools.svelte";
 
   type Props = {
 		canvasTools: PersistedCanvasTools;
-		onchange?: (props: { tool: CanvasTool; color: string; size: number }) => void;
+		onchanged?: (props: { tool: CanvasTool; color: string; size: number }) => void;
+		onclicktool?: (tool: CanvasTool) => boolean;
 		onundo?: () => void;
 		onredo?: () => void;
 		onclear?: () => void;
@@ -17,19 +17,25 @@
   };
 
   let { 
-		canvasTools, canRedo, canUndo,
-		onchange, onundo, onredo, onclear, 
+		canvasTools, 
+		canRedo, 
+		canUndo,
+		onclicktool, onchanged, onundo, onredo, onclear, 
 		class: classes, ...restProps 
 	}: Props = $props();
 
-	$effect(() => { 
-		const updated = { 
-			tool: canvasTools.tool, 
-			size: canvasTools.size, 
-			color: canvasTools.color,
-		};
-		untrack(() => { onchange?.(updated); });
-	});
+
+	function onClickTool(tool: CanvasTool) {
+		
+		if (onclicktool && !onclicktool?.(tool)) {
+			return
+		}
+
+		canvasTools.tool = tool
+		onchanged?.(canvasTools)
+	}
+
+	function onChangeProps(color: string, size: number) {}
 
 </script>
 
@@ -62,10 +68,10 @@
 			</svg>
 		</button>
 	</div>
-	<div class="h-8 w-[.5px] bg-zinc-300"></div>
+	<div id="divider" class="h-8 w-[.5px] bg-zinc-300"></div>
 	<div id="tool" class="flex">
 		<button id="bg" 
-			onclick={() => { canvasTools.tool = "bg" }} aria-label="bg" 
+			onclick={() => { onClickTool("bg") }} aria-label="bg" 
 			class:hidden={!canvasTools.options.includes("bg")}	
 			data-selected={canvasTools.tool=="bg"} 
 			class="p-3 hover:bg-black/5 active:bg-black/15 data-[selected='true']:bg-black/10 rounded-lg outline-0"
@@ -75,7 +81,7 @@
 			</svg>
 		</button>
 		<button id="eraser"
-			onclick={() => { canvasTools.tool = "eraser" }} aria-label="bg" 
+			onclick={() => { onClickTool("eraser") }} aria-label="bg" 
 			class:hidden={!canvasTools.options.includes("eraser")}	
 			data-selected={canvasTools.tool=="eraser"} 
 			class="p-3 hover:bg-black/5 active:bg-black/15 data-[selected='true']:bg-black/10 rounded-lg outline-0"
@@ -85,7 +91,7 @@
 			</svg>
 		</button>
 		<button id="brush"
-			onclick={() => { canvasTools.tool = "brush" }} aria-label="bg" 
+			onclick={() => { onClickTool("brush") }} aria-label="bg" 
 			class:hidden={!canvasTools.options.includes("brush")}	
 			data-selected={canvasTools.tool=="brush"} 
 			class="p-3 hover:bg-black/5 active:bg-black/15 data-[selected='true']:bg-black/10 rounded-lg outline-0"
@@ -95,10 +101,11 @@
 			</svg>
 		</button>
 	</div>
-	<div class="h-8 w-[.5px] bg-zinc-300"></div>
+	<div id="divider" class="h-8 w-[.5px] bg-zinc-300"></div>
 	<BrushProps 
 		bind:color={canvasTools.color} 
 		bind:size={canvasTools.size} 
+		onchange={onChangeProps}
 		colors={canvasTools.colors}
 		sizes={BRUSH_SIZES}
 	>

@@ -7,10 +7,11 @@ import type { Order } from "$lib/db.server";
 import { POSTCARD } from "$lib/types";
 
 
-async function createStripeCheckoutSession(secret: string, origin: string, client_reference_id: string) {
+async function createStripeCheckoutSession(secret: string, origin: string, client_reference_id: string, expires_in: number) {
   const stripe = new Stripe(secret, { apiVersion: "2025-06-30.basil" })
   const session = await stripe.checkout.sessions.create({
     client_reference_id,
+    expires_at: Math.floor(Date.now() / 1000) + expires_in,
     line_items: [
       {
         price_data: {
@@ -33,10 +34,17 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
 export const createCheckout = command(CheckoutRequestSchema, async (request) => {
   const { platform, url } = getRequestEvent();  
   const db = platform!.env.DB
-  const id = crypto.randomUUID();
+  const env = platform!.env.ENV
+  const clientRefId = crypto.randomUUID();
+  const expiresIn = env == "development" ? 60 * 30 : 60 * 60 * 1
 
   // create stripe session
-  const session = await createStripeCheckoutSession(platform!.env.STRIPE_API_SECRET, url.origin, id);
+  const session = await createStripeCheckoutSession(
+    platform!.env.STRIPE_API_SECRET, 
+    url.origin, 
+    clientRefId,
+    expiresIn,
+  );
   if (!session.url) error(404, 'No checkout url')
 
   // generate signed urls
@@ -46,28 +54,30 @@ export const createCheckout = command(CheckoutRequestSchema, async (request) => 
     platform!.env.R2_SECRET_ACCESS_KEY
   )
   const envPath = platform!.env.ENV == "development" ? 'dev' : 'prod'
-  const keyFront = `tmp/24/untogether/${envPath}/${id}_front.jpg`
-  const keyBack = `tmp/24/untogether/${envPath}/${id}_back.jpg`
+  const keyFront = `tmp/24/untogether/${envPath}/${clientRefId}_front.jpg`
+  const keyBack = `tmp/24/untogether/${envPath}/${clientRefId}_back.jpg`
   const urlFront = await R2.getSignedUrl(s3, platform!.env.R2_BUCKET, keyFront, "put", request.frontType, request.frontSize, 60 * 30);
   const urlBack = await R2.getSignedUrl(s3, platform!.env.R2_BUCKET, keyBack, "put", request.backType, request.backSize, 60 * 30);
 
   // insert order
+  // TODO move to db.ts
   const order = await db.prepare(`
-      INSERT INTO orders (
-        id, stripe_checkout_id, 
-        recipient_address, sender_address, send_date, 
-        front_image_url, back_image_url, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      RETURNING *;
-    `)
-    .bind(
-      id, session.id, 
-      JSON.stringify(request.recipient), 
-      JSON.stringify(request.sender), 
-      request.sendDate, 
-      keyFront, keyBack, 'draft'
-    )
-    .first<Order>();
+    INSERT INTO orders (
+      id, stripe_checkout_id, 
+      recipient_address, sender_address, send_date, 
+      front_image_url, back_image_url, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    RETURNING *;
+    `
+  )
+  .bind(
+    clientRefId, session.id, 
+    JSON.stringify(request.recipient), 
+    JSON.stringify(request.sender), 
+    request.sendDate, 
+    keyFront, keyBack, 'draft'
+  )
+  .first<Order>();
   
 	if (!order) error(404, 'Failed to create order')
   

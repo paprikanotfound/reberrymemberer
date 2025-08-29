@@ -14,36 +14,46 @@
   "write": "Write",
   "info": "Info",
   "thank_you": "✈︎✉︎ Thank you for your purchase!",
-
-  "section.from": "From",
-  "section.to": "To",
-  "section.schedule": "Schedule",
-  "field.name": "Name:",
-  "field.address": "Address:",
-  "field.address2": "Address (2):",
-  "field.postal_code": "Postal Code:",
-  "field.city": "City:",
-  "field.country": "Country:",
-  "field.select_country": "Select country",
+  "section": {
+    "from": "From",
+    "to": "To",
+    "schedule": "Schedule"
+  },
+  "field": {
+    "name": "Name:",
+    "address": "Address:",
+    "address2": "Address (2):",
+    "postal_code": "Postal Code:",
+    "city": "City:",
+    "country": "Country:",
+    "select_country": "Select country"
+  },
   "notice_send_date": "Notice: All postcards are sent from the Netherlands via priority mail by PostNL.",
   "send_date": "Send Date:",
-  "error.name_required": "Name is required",
-  "error.address_required": "Address is required",
-  "error.postal_required": "Postal code is required",
-  "error.city_required": "City is required",
-  "error.country_required": "Country is required",
-  "error.date_format": "Date must be in YYYY-MM-DD format",
-  "error.date_future": "Send date must be today or in the future",
-
-  "address.placeholder": "Firstname Lastname\nStreet 123\n1234 AB PLACE",
-  "barcode.notice": "Please leave this area clear for postal service barcodes.",
-
-  "button.exit_pen_mode": "Exit pen mode",
-
-  "nav.front": "Front",
-  "nav.back": "Back",
-  "nav.send": "Send",
-  "nav.prev": "Back",
-  "nav.next": "Next",
-  "nav.checkout": "Checkout"
+  "error": {
+    "name_required": "Name is required",
+    "address_required": "Address is required",
+    "postal_required": "Postal code is required",
+    "city_required": "City is required",
+    "country_required": "Country is required",
+    "date_format": "Date must be in YYYY-MM-DD format",
+    "date_future": "Send date must be today or in the future"
+  },
+  "address": {
+    "placeholder": "Firstname Lastname\nStreet 123\n1234 AB PLACE"
+  },
+  "barcode": {
+    "notice": "Please leave this area clear for postal service barcodes."
+  },
+  "button": {
+    "exit_pen_mode": "Exit pen mode"
+  },
+  "nav": {
+    "front": "Front",
+    "back": "Back",
+    "send": "Send",
+    "prev": "Back",
+    "next": "Next",
+    "checkout": "Checkout"
+  }
 }

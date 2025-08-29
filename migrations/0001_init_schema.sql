@@ -20,7 +20,7 @@ CREATE TABLE orders (
   customer_email TEXT,
   send_date TEXT,
   sender_address TEXT,
-  recipient_address TEXT NOT NULL,
+  recipient_address TEXT,
   front_image_url TEXT NOT NULL,
   back_image_url TEXT NOT NULL,
   status TEXT DEFAULT 'draft',

@@ -4,7 +4,8 @@
 	import { setLocale } from '$lib/paraglide/runtime';
 	import '../app.css';
 	let { children } = $props();
-	setLocale(detectLocale());
+	// setLocale(detectLocale());
+	setLocale("en");
 </script>
 <Toaster />
 {@render children()}

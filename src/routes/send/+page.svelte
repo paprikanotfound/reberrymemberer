@@ -172,9 +172,9 @@
   <div id="topbar" class="fixed top-0 left-0 w-full z-40 transform-none">
     <div id="nav" class="p-2 sm:p-4 leading-snug font-light relative flex justify-between gap-4 w-full bg-white shadow-xl shadow-white">
       <span class="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 justify-center">
-        <button onclick={()=> { loadStep("front") }} class:italic={step == "front"} class:underline={step == "front"}>Front</button> / 
-        <button onclick={()=> { loadStep("back") }} class:italic={step == "back"} class:underline={step == "back"}>Back</button> / 
-        <button onclick={()=> { loadStep("address") }} class:italic={step == "address"} class:underline={step == "address"}>Send</button>
+        <button class="no-underline" onclick={()=> { loadStep("front") }} class:italic={step == "front"} class:underline={step == "front"}>Front</button> / 
+        <button class="no-underline" onclick={()=> { loadStep("back") }} class:italic={step == "back"} class:underline={step == "back"}>Back</button> / 
+        <button class="no-underline" onclick={()=> { loadStep("address") }} class:italic={step == "address"} class:underline={step == "address"}>Send</button>
       </span>
       <button onclick={onPrev} class="flex gap-2 justify-center items-center">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
@@ -260,7 +260,14 @@
 
   <CanvasToolbar
     canvasTools={currentCanvasTool}
-    onchange={(props) => { 
+    onclicktool={(tool) => {
+      // trigger background selector if no bg is selected yet
+      if (tool == "bg" && !currentPage.content.bg) {
+        elmCanvas?.selectBgPicture()
+      }
+      return true
+    }}
+    onchanged={(props) => { 
       // reset zoom
       if (props.tool == "bg") {
         elmEditor?.resetZoom() 

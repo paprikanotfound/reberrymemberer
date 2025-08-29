@@ -7,10 +7,9 @@
 	import { onMount } from "svelte";
 
   const samples = [
-    { front: "./IMG_3423front.jpg", back: "./back1.jpg"},
-    // { front: "./IMG_3423front.jpg", back: "./back2.jpg"},
-    { front: "./IMG_3423front.jpg", back: "./back3.jpg"},
-    { front: "./IMG_3423front.jpg", back: "./back4.jpg"}
+    { front: "./front2.jpg", back: "./back1.jpg"},
+    { front: "./front1.jpg", back: "./back3.jpg"},
+    { front: "./front2.jpg", back: "./back4.jpg"}
   ]
   
   let infoPageVisible = $state(false);
@@ -24,7 +23,7 @@
   });
 </script>
 
-<div class="p-3 sm:p-4 w-full h-full relative aspect-container">
+<div class="p-3 sm:p-4 w-full h-full relative aspect-container flex flex-col">
   <div id="info" class:hidden={!infoPageVisible} class="flex-1 w-full flex flex-col items-start gap-8">
     <span>
       (<button class="hover:underline" onclick={() => { infoPageVisible = false }}>{m.close()}</button>)
@@ -42,14 +41,14 @@
       <p class="text-sm">{m.credit_design()} <a href="https://paprika.fyi" target="_blank" class="italic">Paprika®</a></p>
       <br>
       <p class="text-sm">{m.credit_contact()}</p>
-      <p class="text-sm"><span class="italic"><a href="mailto:support@paprika.fyi" target="_blank" class="italic">support(at)paprika.fyi</a></span></p>
+      <p class="text-sm"><a href="mailto:support@paprika.fyi" target="_blank" class="italic">support(at)paprika.fyi</a></p>
     </section>
   </div> 
   <div id="postcard" class:hidden={infoPageVisible}
     class="
       absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 
       h-auto w-full max-w-[89%] max-h-[75%] md:max-w-[45rem]
-      flex flex-col gap-12 mt-12 pb-12
+      flex flex-col gap-12
     " 
     style:aspect-ratio={POSTCARD.size.w/POSTCARD.size.h}
     >
@@ -62,11 +61,19 @@
       front={samples[pindex.current].front} 
       back={samples[pindex.current].back} 
     />
-    <div class="flex flex-col gap-2">
+    <!-- <div class="flex flex-col gap-2">
       <span class="self-center leading-none _text-center">{m.tagline()}</span>
-      <div class="w-full flex gap-1 justify-center items-center leading-none">
+      <div class="w-full flex gap-2 justify-center items-center leading-none">
         <a href="/send">{m.write()}</a> – <button onclick={() => { infoPageVisible = !infoPageVisible }}>{m.info()}</button>
       </div>
+    </div> -->
+  </div>
+  <div class="flex-1"></div>
+  <div class:hidden={infoPageVisible} class="flex flex-col items-center py-8">
+    <div class="">{m.tagline()}</div>
+    <div class="">
+      <a href="/send">{m.write()}</a>, 
+      <button onclick={() => { infoPageVisible = !infoPageVisible }}>{m.info()}</button>
     </div>
   </div>
 </div>
