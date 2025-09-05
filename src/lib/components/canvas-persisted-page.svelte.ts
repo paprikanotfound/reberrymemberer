@@ -71,7 +71,7 @@ export function createPersistedPage(key: string) {
       };
     },
     resetContent() {
-      history.log = [] // reset history
+      // history.log = [] // reset history
       page.current = DEFAULT_CONTENT
     },
     exportImage,
