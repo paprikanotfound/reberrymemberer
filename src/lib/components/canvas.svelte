@@ -165,7 +165,9 @@
     }
   }
 
-  function handlePointerUp(e: PointerEvent) { if (e.pointerId == mainPointer) finishGesture(); }
+  function handlePointerUp(e: PointerEvent) { 
+    if (e.pointerId == mainPointer) finishGesture(); 
+  }
 
 
   function finishGesture(cancelled: boolean = false) {
