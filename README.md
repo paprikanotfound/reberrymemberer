@@ -1,5 +1,5 @@
 # Reberrymemberer
-A minimal postal experiment to send custom postcards across the world. Built with SvelteKit.
+A minimal postal experiment to send custom postcards across the world.
 [reberrymemberer.com](https://reberrymemberer.com)
 
 ## ⚠️ Note on SvelteKit
@@ -26,6 +26,11 @@ cd reberrymemberer
 npm install
 npm run dev
 ```
+
+## Roadmap
+
+- Improve mobile usage;
+- Finish localization;
 
 ## License
 
