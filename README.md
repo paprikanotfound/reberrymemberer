@@ -1,35 +1,45 @@
-# sv
-...//untogether.now
+# Reberrymemberer ✉️  
+[reberrymemberer.com](https://reberrymemberer.com) – _A minimal postal experiment to send custom postcards across the world. Built with SvelteKit._
 
-## start
+## ⚠️ Note on SvelteKit
+This project uses an **experimental version of SvelteKit with remote functions**.  
+It’s not recommended for production use, but it was chosen here for exploration and learning purposes.  
 
-git init
-git remote add origin https://github.com/paprikanotfound/untogethernow
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git push -u origin main
+## Overview
 
-## D1 migrations
+- `src/`: the SvelteJS source code which consists of HTML, TypeScript and Sass.
+- `lib/`: the SvelteJS library files which indicate shared code.
+- `static/`: any public assets such as images.
+- `.svelte-kit/cloudflare/`: the automatically generated Cloudflare Worker assets (from `npm install`), do not edit.
+- `svelte.config.js`: the SvelteJS configuration file.
+- `vite.config.ts`: the Vite configuration file.
+- `tsconfig.json`: the TypeScript configuration file.
+- `wrangler.jsonc`: the wrangler configuration file to run locally or deploy to Cloudflare Workers.
 
-```
-npx wrangler d1 migrations create untogether-db <message>
-npx wrangler d1 migrations list untogether-db
-npx wrangler d1 migrations apply untogether-db --local
+## Usage
 
-npx wrangler d1 execute untogether-db --local --file=./local.queries.sql
-```
-
-## Workers secrets
-[Secrets on deployed Workers](https://developers.cloudflare.com/workers/configuration/secrets/#adding-secrets-to-your-project)
-
-```
-npx wrangler secret put <KEY>
-npx wrangler versions secret put <KEY>
+Clone the repo and set it up locally:  
+```bash
+git clone https://github.com/paprikanotfound/reberrymemberer.git
+cd reberrymemberer
+npm install
+npm run dev
 ```
 
-## stripe webhooks local
+## License
 
 ```
-stripe listen --forward-to localhost:3005/webhooks/stripe
+Copyright 2020 Paprika
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 ```
