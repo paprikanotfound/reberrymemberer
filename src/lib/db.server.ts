@@ -15,16 +15,32 @@ export type Order = {
   created_at?: string; // ISO timestamp, optional on insert
 };
 
+
 export function createOrderQueries(db: D1Database) {
 
-  /**
-   * update order status to paid, only if status != 'paid' to check prevent double processing
-   * 
-   * @param email 
-   * @param paymentIntent 
-   * @param id 
-   * @returns 
-   */
+  const createNewOrder = (
+    id: Order['id'],
+    sessionId: Order['stripe_checkout_id'],
+    recipient: Order['recipient_address'],
+    sender: Order['sender_address'],
+    sendDate: Order['send_date'],
+    front: Order['front_image_url'],
+    back: Order['back_image_url'],
+    status: Order['status'],
+  ) => {
+    return db.prepare(`
+      INSERT INTO orders (
+        id, stripe_checkout_id, 
+        recipient_address, sender_address, send_date, 
+        front_image_url, back_image_url, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      RETURNING *;
+      `
+    )
+    .bind(id, sessionId, recipient, sender, sendDate, front, back, status)
+    .first<Order>();
+  }
+
   const setOrderStatusAsPaidOrSkip = (
     email: Order['customer_email'], 
     paymentIntent: Order['stripe_payment_intent'], 
@@ -40,13 +56,7 @@ export function createOrderQueries(db: D1Database) {
     .first<Order>();
   }
 
-  /**
-   * Update order status to confirmed, set provider order_id, clear address details
-   * @param provider_order_id 
-   * @param id 
-   * @returns 
-   */
-  const setOrderAsConfirmedAndProviderId = (
+  const setOrderAsConfirmedWithProviderId = (
     provider_order_id: Order['provider_order_id'], 
     id: Order['id'],
   ) => {
@@ -100,8 +110,9 @@ export function createOrderQueries(db: D1Database) {
   }
 
   return {
+    createNewOrder,
     setOrderStatusAsPaidOrSkip,
-    setOrderAsConfirmedAndProviderId,
+    setOrderAsConfirmedWithProviderId,
     setOrderFailedPayment,
     setOrderCancelled,
     setOrderCancelledFraud,

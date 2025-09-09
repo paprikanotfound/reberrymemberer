@@ -14,11 +14,11 @@
   let container: HTMLDivElement | undefined = $state();
 
 	const large = new MediaQuery('min-width: 800px');
+
   let styleSize: string = $state(large.current ? 
 		`height: 100%; width: auto; aspect-ratio: ${aspect};` : 
 		`width: 100%; height: auto; aspect-ratio: ${aspect};`
 	);
-  // let styleSize: string = $state(`width: 100%; height: auto; aspect-ratio: ${aspect};`);
 
   function updateSize() {
     if (!container || !container.parentElement! || !aspect) return;
@@ -45,24 +45,3 @@
 <div bind:this={container} class={classes} {...restProps} style="{styleSize}{restStyle}">
   {@render children()}
 </div>
-
-<!-- <div class="aspect-box {classes}" style:aspect-ratio={aspect} {...restProps}>
-	{@render children()}
-</div>
-
-<style>
-	@container (aspect-ratio > 1) {
-		.aspect-box {
-			height: 100%;
-			width: auto;
-		}
-	}
-	@container (aspect-ratio <= 1) {
-		.aspect-box {
-			width: 100%;
-			height: auto;
-		}
-	}
-</style> -->
-
-

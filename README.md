@@ -1,8 +1,9 @@
-# Reberrymemberer ✉️  
-[reberrymemberer.com](https://reberrymemberer.com) – _A minimal postal experiment to send custom postcards across the world. Built with SvelteKit._
+# Reberrymemberer
+A minimal postal experiment to send custom postcards across the world. Built with SvelteKit.
+[reberrymemberer.com](https://reberrymemberer.com)
 
 ## ⚠️ Note on SvelteKit
-This project uses an **experimental version of SvelteKit with remote functions**.  
+This project uses an **experimental version** of SvelteKit with remote functions.  
 It’s not recommended for production use, but it was chosen here for exploration and learning purposes.  
 
 ## Overview
@@ -29,7 +30,7 @@ npm run dev
 ## License
 
 ```
-Copyright 2020 Paprika
+Copyright 2025 Paprikanotfound
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

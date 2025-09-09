@@ -4,9 +4,9 @@ import { error } from "@sveltejs/kit";
 import Stripe from "stripe"
 
 
-export async function POST({ platform, request, url, fetch }) {
+export async function POST({ platform, request }) {
   /**
-   * requires node:crypto w/ nodejs_compat flag in cf worker to be enabled.
+   * Note: requires node:crypto w/ nodejs_compat flag in cf worker to be enabled.
    * https://developers.cloudflare.com/workers/runtime-apis/nodejs/crypto/
    * 
    */
@@ -20,26 +20,26 @@ export async function POST({ platform, request, url, fetch }) {
   const queries = createOrderQueries(platform!.env.DB)
 
   const fulfillOrder = async (session: Stripe.Response<Stripe.Checkout.Session>)  => {
-    
-    // update order status if not marked as 'paid' already
+    // Update order status and prevent 
     const order = await queries.setOrderStatusAsPaidOrSkip(
       session.customer_email, 
       session.payment_intent!.toString(), 
       session.client_reference_id!
     )
     if (!order) {
-      console.error('Order already fullfilled or not found!', session.client_reference_id)
+      console.error('Order already fullfilled or not found!', session.client_reference_id);
       return
     }
     
-    // create print order
     if (!order.recipient_address || !order.sender_address) {
-      console.error('Order error: missing address details', order.recipient_address, order.sender_address)
+      console.error('Order missing address details', session.client_reference_id);
       await queries.setOrderCancelled(session.client_reference_id!, "system_error");
-      // TODO email support
+      // TODO dev email to notify support
       return
     }
 
+    // Note: Merging address lines as workaround for print.one API error
+    // 'address does not contain a house number.'
     let senderAddress: AddressDetails = JSON.parse(order.sender_address)
     senderAddress.address = `${senderAddress.address} ${senderAddress.addressLine2}`
     senderAddress.addressLine2 = ''
@@ -62,16 +62,16 @@ export async function POST({ platform, request, url, fetch }) {
       }
     }
     
+    // Create print.one order
     const { response, data } = await createPrintOneOrder(apiKey, apiUrl, payload);
     if (!response.ok) {
-      console.error('Print.one Error:', data, session.client_reference_id)
+      console.error('print.one error:', data, session.client_reference_id)
       await queries.setOrderCancelled(session.client_reference_id!, "system_error");
-      // TODO email support
       return
     }
 
-    // update order details
-    const result = await queries.setOrderAsConfirmedAndProviderId(data.id, order.id)
+    // Update order details
+    const result = await queries.setOrderAsConfirmedWithProviderId(data.id, order.id)
     if (result.meta.changes == 0) {
       console.error('Failed to update order with provider id!', order.id);
       return
@@ -80,7 +80,6 @@ export async function POST({ platform, request, url, fetch }) {
 
   switch (event.type) {
     case 'checkout.session.expired': {
-      // TODO set order expired
       const session = event.data.object as Stripe.Checkout.Session
       const orderId = session.client_reference_id!
       await queries.setOrderAsExpired(orderId);
@@ -94,6 +93,7 @@ export async function POST({ platform, request, url, fetch }) {
       // Create a new order
       // await createOrder(platform!.env.DB, sessionWithLineItems)
       // Check if the order is paid (for example, from a card payment)
+      //
       // A delayed notification payment will have an `unpaid` status, as
       // you're still waiting for funds to be transferred from the customer's
       // account.
@@ -113,7 +113,6 @@ export async function POST({ platform, request, url, fetch }) {
     case 'checkout.session.async_payment_failed': {
       const session = event.data.object as Stripe.Checkout.Session
       await queries.setOrderFailedPayment(session.client_reference_id!)
-      // TODO Email customer
       break
     }
     case 'radar.early_fraud_warning.created': {
@@ -126,7 +125,6 @@ export async function POST({ platform, request, url, fetch }) {
       if (efwWithPayIntent.actionable) {
         await stripe.refunds.create({ charge: efw.charge.toString(), reason: 'fraudulent' })
         await queries.setOrderCancelledFraud(efw.payment_intent!.toString())
-        // TODO Email customer
       }
       break
     }

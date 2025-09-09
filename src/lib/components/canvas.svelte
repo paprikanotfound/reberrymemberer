@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
-	import type { CanvasContent, CanvasTool, Point, Stroke } from '$lib/components/canvas.types';
+	import type { CanvasTool, Point, Stroke } from '$lib/components/canvas.types';
 	import { getStroke } from 'perfect-freehand';
 	import { resizeImage } from '$lib/utils/utils.image';
 	import { base64ToBlob, fileToBase64, normalizeFiles } from '$lib/utils/utils.file';
