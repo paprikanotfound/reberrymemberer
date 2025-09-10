@@ -29,9 +29,9 @@ npm run dev
 
 ## Roadmap
 
-- Include a small test suite covering core features (frontend rendering, API handlers, and Stripe webhook logic).;
+- Test API handlers, and Stripe webhook logic;
 - Improve mobile usage;
-- Finish localization;
+- Add localization;
 
 ## License
 
