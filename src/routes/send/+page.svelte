@@ -9,7 +9,7 @@
 	import { onMount, untrack } from "svelte";
 	import CanvasToolbar from "$lib/components/canvas-toolbar.svelte";
 	import type { AddressDetails } from "$lib/api.printone.server";
-	import { POSTCARD } from "$lib/types";
+	import { POSTCARD } from "$lib/app";
 	import { isHttpError } from "@sveltejs/kit";
 	import Aspect from "$lib/components/aspect.svelte";
   import countries from '$lib/countries.json'
