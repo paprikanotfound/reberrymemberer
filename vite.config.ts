@@ -12,8 +12,8 @@ export default defineConfig({
     svelteTesting(),
 	],
   test: {
-    environment: 'jsdom', // ← for @testing-library/svelte
-    globals: true, // ← this is crucial
+    environment: 'jsdom',
+    globals: true,
     // environment: 'browser',
     // browser: {
     //   enabled: true,
@@ -21,36 +21,6 @@ export default defineConfig({
     //   instances: [{ browser: 'chromium' }]
     // },
     include: ['tests/unit/**/*.test.ts'],
-    // include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-    // exclude: ['src/lib/server/**'],
     setupFiles: ['./vitest-setup-client.ts']
   }
-	// test: {
-	// 	projects: [
-	// 		{
-	// 			extends: './vite.config.ts',
-	// 			test: {
-	// 				name: 'client',
-	// 				environment: 'browser',
-	// 				browser: {
-	// 					enabled: true,
-	// 					provider: 'playwright',
-	// 					instances: [{ browser: 'chromium' }]
-	// 				},
-	// 				include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-	// 				exclude: ['src/lib/server/**'],
-	// 				setupFiles: ['./vitest-setup-client.ts']
-	// 			}
-	// 		},
-	// 		{
-	// 			extends: './vite.config.ts',
-	// 			test: {
-	// 				name: 'server',
-	// 				environment: 'node',
-	// 				include: ['src/**/*.{test,spec}.{js,ts}'],
-	// 				exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
-	// 			}
-	// 		}
-	// 	]
-	// }
 });
