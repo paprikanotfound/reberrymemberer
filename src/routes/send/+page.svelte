@@ -18,6 +18,7 @@
 	import { m } from "$lib/paraglide/messages";
 	import { createCanvasTools } from "$lib/components/canvas-persisted-tools.svelte";
 	import { toast } from "svelte-sonner";
+	import { encodeAddressDetails } from "./types";
 
   
   const DEFAULT_TOOLS_FRONT = {
@@ -65,15 +66,21 @@
   let formErrors: Record<string, string> = $state({})
 
   $effect(() => {
-    const selected = sendDate
+    const selected = sendDate;
+
+    /**
+     * Ensure the user cannot pick a date in the past.
+     * If the selected date is earlier than today, we
+     * force the input value back to today's date.
+     */
     untrack(async () => {
       const a = new Date(selected);
       const b = new Date(today);
       if (dateInput && a < b) {
         dateInput.value = today;
       }
-    })
-  })
+    });
+  });
 
   let canvasInPenMode = $state(false)
   let toolsFront = createCanvasTools("front", DEFAULT_TOOLS_FRONT, ["bg","eraser","brush"], BRUSH_COLORS)
@@ -85,6 +92,7 @@
     const index = steps.indexOf(step);
     if (index > 0) loadStep(steps[index-1]);
   };
+
   const onNext = () => {
     const index = steps.indexOf(step);
     if (index < steps.length - 1) loadStep(steps[index + 1]);
@@ -115,6 +123,7 @@
     step = next;
   }
 
+
   async function requestCheckoutLink() {
     try {
       const [pageFrontImg, pageBackImg] = await Promise.all([
@@ -122,17 +131,29 @@
         pageBack.exportImage(POSTCARD.type, 1),
       ]);
 
+      /**
+       * Workaround for SvelteKit `command`/`devalue` serialization issue:
+       * 
+       * Korean (and other non-ASCII) characters can cause `InvalidCharacterError`
+       * during transport. We avoid this by safely encoding all string fields with
+       * `encodeURIComponent` before sending, and decoding them again on receipt.
+       *
+       * 🚧 This should be removed once SvelteKit/devalue fixes Unicode handling.
+       */
+      const safeSender = encodeAddressDetails(sender);
+      const safeRecipient = encodeAddressDetails(recipient);
+      
+      console.log(safeSender, sender);
+
       const result = await createCheckout($state.snapshot({
-        sender,
-        recipient,
-        sendDate,
+        sender: safeSender,
+        recipient: safeRecipient,
+        sendDate: sendDate,
         frontType: POSTCARD.type,
         frontSize: pageFrontImg.size,
         backType: POSTCARD.type,
         backSize: pageBackImg.size,
       }));
-
-      console.log(result)
 
       await Promise.allSettled([
         uploadContent(result.url_front, pageFrontImg),
@@ -152,9 +173,8 @@
         formErrors = fieldErrors;
         return
       }
-      console.log(error)
+      console.log(error);
       toast.error(`${error}`);
-      //TODO toast error
     }
   }
 
@@ -166,8 +186,7 @@
 <div 
   class:overflow-hidden={step !== "address"}
   class:overscroll-none={step !== "address"}
-  class="relative w-full h-full select-none"
->
+  class="relative w-full h-full select-none">
   
   <div id="topbar" class="fixed top-0 left-0 w-full z-40 transform-none">
     <div id="nav" class="p-2 sm:p-4 leading-snug font-light relative flex justify-between gap-4 w-full bg-white shadow-xl shadow-white">

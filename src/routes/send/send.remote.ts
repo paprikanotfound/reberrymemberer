@@ -1,6 +1,6 @@
 import { command, getRequestEvent } from "$app/server"
 import { error } from "@sveltejs/kit";
-import { CheckoutRequestSchema } from "./types";
+import { CheckoutRequestSchema, decodeAddressDetails } from "./types";
 import { Stripe } from "stripe"
 import { R2 } from "$lib/utils/utils.r2";
 import { createOrderQueries } from "$lib/db.server";
@@ -32,7 +32,7 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
 }
 
 export const createCheckout = command(CheckoutRequestSchema, async (request) => {
-  const { platform, url } = getRequestEvent();  
+  const { platform, url } = getRequestEvent();
   const db = platform!.env.DB
   const env = platform!.env.ENV
   const clientRefId = crypto.randomUUID();
@@ -54,8 +54,8 @@ export const createCheckout = command(CheckoutRequestSchema, async (request) => 
     platform!.env.R2_SECRET_ACCESS_KEY
   )
   const envPath = platform!.env.ENV == "development" ? 'dev' : 'prod'
-  const keyFront = `tmp/24/untogether/${envPath}/${clientRefId}_front.jpg`;
-  const keyBack = `tmp/24/untogether/${envPath}/${clientRefId}_back.jpg`;
+  const keyFront = `tmp/30/reberrymemberer/${envPath}/${clientRefId}_front.jpg`;
+  const keyBack = `tmp/30/reberrymemberer/${envPath}/${clientRefId}_back.jpg`;
   const urlFront = await R2.getSignedUrl(s3, platform!.env.R2_BUCKET, keyFront, "put", request.frontType, request.frontSize, 60 * 30);
   const urlBack = await R2.getSignedUrl(s3, platform!.env.R2_BUCKET, keyBack, "put", request.backType, request.backSize, 60 * 30);
 
@@ -64,8 +64,8 @@ export const createCheckout = command(CheckoutRequestSchema, async (request) => 
   const order = await query.createNewOrder(
     clientRefId, 
     session.id, 
-    JSON.stringify(request.recipient), 
-    JSON.stringify(request.sender), 
+    JSON.stringify(decodeAddressDetails(request.recipient)), 
+    JSON.stringify(decodeAddressDetails(request.sender)), 
     request.sendDate, 
     keyFront, 
     keyBack, 

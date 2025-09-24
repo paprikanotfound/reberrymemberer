@@ -35,3 +35,24 @@ export const CheckoutRequestSchema = z.object({
 });
 
 export type AddressDetails = z.infer<typeof AddressDetailsSchema>;
+
+/**
+ * Workaround for SvelteKit `command`/`devalue` serialization issue:
+ *
+ * Korean (and other non-ASCII) characters can trigger `InvalidCharacterError`
+ * when sent directly over the wire. To prevent this, we URL-encode all fields
+ * before sending them to the server, and decode them again on receipt.
+ *
+ * 🚧 Remove once SvelteKit/devalue fully supports Unicode serialization.
+ */
+export function encodeAddressDetails(addr: AddressDetails) {
+  return <AddressDetails> Object.fromEntries(
+    Object.entries(addr).map(([k, v]) => [k, encodeURIComponent(v ?? '')])
+  );
+}
+
+export function decodeAddressDetails(addr: AddressDetails) {
+  return <AddressDetails> Object.fromEntries(
+    Object.entries(addr).map(([k, v]) => [k, decodeURIComponent(v ?? '')])
+  );
+}
