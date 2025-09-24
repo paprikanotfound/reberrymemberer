@@ -47,17 +47,21 @@ export type AddressDetails = {
   country: string;
 };
 
-export async function createPrintOneClient(apiKey: string, apiUrl: string, payload: OrderRequestPayload) {
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": `${apiKey}`
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const data: OrderResponse = await response.json();
-  
-  return { response, data }
+export function createPrintOneClient({ apiKey, apiUrl }: { apiKey: string, apiUrl: string }) {
+  return {
+    createNewOrder: async (payload: OrderRequestPayload) => {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": `${apiKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+    
+      const data: OrderResponse = await response.json();
+      
+      return { response, data }
+    }
+  }
 }

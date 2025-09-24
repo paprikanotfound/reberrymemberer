@@ -3,7 +3,6 @@ import { getDBClient } from "$lib/server/db";
 import { error } from "@sveltejs/kit";
 import Stripe from "stripe"
 
-
 export async function POST({ platform, request }) {
   const stripeSignSecret = platform!.env.STRIPE_API_SIGN_SECRET;
   const stripe = new Stripe(platform!.env.STRIPE_API_SECRET, { apiVersion: '2025-06-30.basil' })
@@ -14,7 +13,6 @@ export async function POST({ platform, request }) {
   if (!event) return error(500, "Stripe signature is not valid");
   
   const db = getDBClient(platform!.env.DB);
-
   const fulfillOrder = async (session: Stripe.Response<Stripe.Checkout.Session>)  => {
     const sessionOrderId = session.client_reference_id!;
 
@@ -47,8 +45,6 @@ export async function POST({ platform, request }) {
     recipientAddress.address = `${recipientAddress.address} ${recipientAddress.addressLine2}`
     recipientAddress.addressLine2 = ''
 
-    const apiKey = platform!.env.PRINT_ONE_API
-    const apiUrl = platform!.env.PRINT_ONE_API_URL
     const payload: OrderRequestPayload = {
       templateId: platform!.env.PRINT_ONE_TEMPLATE_ID,
       sendDate: order.send_date ?? undefined,
@@ -62,7 +58,12 @@ export async function POST({ platform, request }) {
     }
     
     // Create new provider order (print.one)
-    const { response, data } = await createPrintOneClient(apiKey, apiUrl, payload);
+    const printOne = createPrintOneClient({
+      apiKey: platform!.env.PRINT_ONE_API, 
+      apiUrl: platform!.env.PRINT_ONE_API_URL
+    });
+    const { response, data } = await printOne.createNewOrder(payload);
+
     if (!response.ok) {
       console.error('print.one error:', data, session.client_reference_id);
       await db.setOrderCancelled({ orderId: sessionOrderId, reason: "system_error" });
@@ -73,7 +74,7 @@ export async function POST({ platform, request }) {
     const result = await db.setOrderAsConfirmedWithProviderId({ 
       provider_order_id: data.id, 
       order_id: order.id
-    })
+    });
     if (result.meta.changes == 0) {
       console.error('Failed to update order with provider id!', order.id);
       return
