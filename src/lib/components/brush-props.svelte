@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Popover } from "bits-ui";
 	import type { Snippet } from "svelte";
-	import { BRUSH_SIZES } from "./canvas.types";
+	import { BRUSH_SIZES } from "./canvas/types";
 
   type Props = {
     color: string;
