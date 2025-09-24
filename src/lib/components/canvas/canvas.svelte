@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
-	import type { CanvasTool, Point, Stroke } from '$lib/components/canvas.types';
+	import type { CanvasTool, Point, Stroke } from './types';
 	import { getStroke } from 'perfect-freehand';
-	import { resizeImage } from '$lib/utils/utils.image';
-	import { base64ToBlob, fileToBase64, normalizeFiles } from '$lib/utils/utils.file';
+	import { resizeImage } from '$lib/utils/images';
+	import { base64ToBlob, fileToBase64, normalizeFiles } from '$lib/utils/files';
 	import { SvelteSet } from 'svelte/reactivity';
-	import type { PersistedPage } from './canvas-persisted-page.svelte';
+	import type { PersistedPage } from './persisted-page.svelte';
 
 
   interface Props {

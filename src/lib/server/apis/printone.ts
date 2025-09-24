@@ -47,7 +47,7 @@ export type AddressDetails = {
   country: string;
 };
 
-export async function createPrintOneOrder(apiKey: string, apiUrl: string, payload: OrderRequestPayload) {
+export async function createPrintOneClient(apiKey: string, apiUrl: string, payload: OrderRequestPayload) {
   const response = await fetch(apiUrl, {
     method: "POST",
     headers: {

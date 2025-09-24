@@ -1,5 +1,5 @@
 import { PersistedState } from "runed" // adjust import path if different
-import type { CanvasTool } from "./canvas.types"
+import type { CanvasTool } from "../canvas.types"
 
 
 export type PersistedCanvasTools = ReturnType<typeof createCanvasTools>;

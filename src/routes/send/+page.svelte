@@ -1,22 +1,22 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { BRUSH_COLORS, BRUSH_COLORS_TEXT, BRUSH_SIZES, type CanvasTool } from "$lib/components/canvas.types";
-	import Canvas from "$lib/components/canvas.svelte";
+	import { BRUSH_COLORS, BRUSH_COLORS_TEXT, BRUSH_SIZES, type CanvasTool } from "$lib/components/canvas/types";
+	import Canvas from "$lib/components/canvas/canvas.svelte";
+	import { createPersistedPage } from "$lib/components/canvas/persisted-page.svelte";
+	import { createCanvasTools } from "$lib/components/canvas/persisted-tools.svelte";
 	import Editor from "$lib/components/editor.svelte";
-	import { downloadBlob } from "$lib/utils/utils.image";
+	import { downloadBlob } from "$lib/utils/images";
 	import { createCheckout } from "./send.remote";
-	import { uploadContent } from "$lib/utils/utils.upload";
+	import { uploadContent } from "$lib/utils/file-upload";
 	import { onMount, untrack } from "svelte";
-	import CanvasToolbar from "$lib/components/canvas-toolbar.svelte";
-	import type { AddressDetails } from "$lib/api.printone.server";
+	import CanvasToolbar from "$lib/components/canvas/toolbar.svelte";
+	import type { AddressDetails } from "$lib/server/apis/printone";
 	import { POSTCARD } from "$lib/app";
 	import { isHttpError } from "@sveltejs/kit";
 	import Aspect from "$lib/components/aspect.svelte";
   import countries from '$lib/countries.json'
   import { dev, browser } from '$app/environment';
-	import { createPersistedPage } from "$lib/components/canvas-persisted-page.svelte";
 	import { m } from "$lib/paraglide/messages";
-	import { createCanvasTools } from "$lib/components/canvas-persisted-tools.svelte";
 	import { toast } from "svelte-sonner";
 	import { encodeAddressDetails } from "./types";
 

@@ -1,4 +1,4 @@
-import type { Stroke } from "$lib/components/canvas.types";
+import type { Stroke } from "$lib/components/canvas/types";
 import getStroke from "perfect-freehand";
 
 

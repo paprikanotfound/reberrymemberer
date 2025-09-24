@@ -1,9 +1,9 @@
 import { PersistedState, StateHistory } from "runed" // adjust import path if different
-import type { CanvasContent, Stroke } from "./canvas.types"
+import type { CanvasContent, Stroke } from "./types"
 import { POSTCARD } from "$lib/app";
-import { drawObjectCover, drawStokes } from "$lib/utils/utils.canvas";
-import { loadImage } from "$lib/utils/utils.image";
-import { base64ToBlob } from "$lib/utils/utils.file";
+import { drawObjectCover, drawStokes } from "$lib/utils/canvas";
+import { loadImage } from "$lib/utils/images";
+import { base64ToBlob } from "$lib/utils/files";
 
 
 const DEFAULT_CONTENT = { strokes: [], bgOffsetX: 0, bgOffsetY: 0 }

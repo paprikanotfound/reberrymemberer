@@ -7,9 +7,9 @@
 	import { onMount } from "svelte";
 
   const samples = [
-    { front: "./front2.jpg", back: "./back1.jpg"},
-    { front: "./front1.jpg", back: "./back3.jpg"},
-    { front: "./front2.jpg", back: "./back4.jpg"}
+    { front: "./examples/front2.jpg", back: "./examples/back1.jpg"},
+    { front: "./examples/front1.jpg", back: "./examples/back3.jpg"},
+    { front: "./examples/front2.jpg", back: "./examples/back4.jpg"}
   ]
   
   let infoPageVisible = $state(false);

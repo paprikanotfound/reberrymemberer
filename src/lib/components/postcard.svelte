@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
   import { Spring } from "svelte/motion";
-	import { mapRange } from '$lib/utils/utils';
+	import { mapRange } from '$lib/utils/math';
 
   interface Props {
     front: string;

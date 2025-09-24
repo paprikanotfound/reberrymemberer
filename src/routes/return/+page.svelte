@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { clearPersistedPage } from "$lib/components/canvas-persisted-page.svelte";
+	import { clearPersistedPage } from "$lib/components/canvas/persisted-page.svelte";
 	import { m } from "$lib/paraglide/messages";
   clearPersistedPage("front")
   clearPersistedPage("back")

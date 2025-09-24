@@ -1,7 +1,7 @@
 <script lang="ts">
-	import BrushProps from "./brush-props.svelte";
-	import { BRUSH_SIZES, type CanvasTool } from "./canvas.types";
-	import type { PersistedCanvasTools } from "./canvas-persisted-tools.svelte";
+	import BrushProps from "../brush-props.svelte";
+	import { BRUSH_SIZES, type CanvasTool } from "./types";
+	import type { PersistedCanvasTools } from "./persisted-tools.svelte";
 
   type Props = {
 		canvasTools: PersistedCanvasTools;

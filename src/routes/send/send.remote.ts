@@ -2,8 +2,8 @@ import { command, getRequestEvent } from "$app/server"
 import { error } from "@sveltejs/kit";
 import { CheckoutRequestSchema, decodeAddressDetails } from "./types";
 import { Stripe } from "stripe"
-import { R2 } from "$lib/utils/utils.r2";
-import { createOrderQueries } from "$lib/db.server";
+import { R2 } from "$lib/utils/r2";
+import { getDBClient } from "$lib/server/db";
 import { POSTCARD } from "$lib/app";
 
 
@@ -33,10 +33,8 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
 
 export const createCheckout = command(CheckoutRequestSchema, async (request) => {
   const { platform, url } = getRequestEvent();
-  const db = platform!.env.DB
-  const env = platform!.env.ENV
   const clientRefId = crypto.randomUUID();
-  const expiresIn = env == "development" ? 60 * 30 : 60 * 60 * 1
+  const expiresIn = platform!.env.ENV == "development" ? 60 * 30 : 60 * 60 * 1
 
   // Create a Stripe session
   const session = await createStripeCheckoutSession(
@@ -52,7 +50,7 @@ export const createCheckout = command(CheckoutRequestSchema, async (request) => 
     platform!.env.R2_ENDPOINT,
     platform!.env.R2_ACCESS_KEY_ID,
     platform!.env.R2_SECRET_ACCESS_KEY
-  )
+  );
   const envPath = platform!.env.ENV == "development" ? 'dev' : 'prod'
   const keyFront = `tmp/30/reberrymemberer/${envPath}/${clientRefId}_front.jpg`;
   const keyBack = `tmp/30/reberrymemberer/${envPath}/${clientRefId}_back.jpg`;
@@ -60,17 +58,17 @@ export const createCheckout = command(CheckoutRequestSchema, async (request) => 
   const urlBack = await R2.getSignedUrl(s3, platform!.env.R2_BUCKET, keyBack, "put", request.backType, request.backSize, 60 * 30);
 
   // Create new order
-  const query = createOrderQueries(db);
-  const order = await query.createNewOrder(
-    clientRefId, 
-    session.id, 
-    JSON.stringify(decodeAddressDetails(request.recipient)), 
-    JSON.stringify(decodeAddressDetails(request.sender)), 
-    request.sendDate, 
-    keyFront, 
-    keyBack, 
-    'draft'
-  );
+  const db = getDBClient(platform!.env.DB);
+  const order = await db.createNewOrder({
+    id: clientRefId, 
+    stripe_checkout_id: session.id, 
+    recipient_address: JSON.stringify(decodeAddressDetails(request.recipient)), 
+    sender_address: JSON.stringify(decodeAddressDetails(request.sender)), 
+    send_date: request.sendDate, 
+    front_image_url: keyFront, 
+    back_image_url: keyBack, 
+    status: 'draft',
+  });
   
 	if (!order) error(404, 'Failed to create order')
   
