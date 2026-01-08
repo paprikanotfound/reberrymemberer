@@ -6,19 +6,18 @@
 	import { createCanvasTools } from "$lib/components/canvas/persisted-tools.svelte";
 	import Editor from "$lib/components/editor.svelte";
 	import { downloadBlob } from "$lib/utils/images";
-	import { createCheckout } from "./send.remote";
+	import { createCheckout } from "$lib/send.remote";
 	import { uploadContent } from "$lib/utils/file-upload";
 	import { onMount, untrack } from "svelte";
 	import CanvasToolbar from "$lib/components/canvas/toolbar.svelte";
-	import type { AddressDetails } from "$lib/server/apis/printone";
-	import { POSTCARD } from "$lib/app";
+	import type { AddressDetails } from "$lib/server/printone";
+	import { encodeAddressDetails, POSTCARD } from "$lib";
 	import { isHttpError } from "@sveltejs/kit";
 	import Aspect from "$lib/components/aspect.svelte";
   import countries from '$lib/countries.json'
   import { dev, browser } from '$app/environment';
 	import { m } from "$lib/paraglide/messages";
 	import { toast } from "svelte-sonner";
-	import { encodeAddressDetails } from "./types";
 
   
   const DEFAULT_TOOLS_FRONT = {
