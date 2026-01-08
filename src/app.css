@@ -6,10 +6,13 @@
 
 @layer base {
 	html, body {
-		@apply size-full antialiased; /* beautify text */
+		@apply size-full antialiased;
+		/* disable mobile tap zoom, etc */
+		touch-action: manipulation;
 	}
 	body {
 		@apply text-base sm:text-[17px];
+		text-rendering: optimizeLegibility;
 	}
 	button {
 		@apply hover:cursor-pointer underline;
@@ -28,7 +31,6 @@
 @utility postcard-shadow-hover {
 	box-shadow: rgba(17, 12, 46, 0.025) 0px 20px 10px -0px, rgba(0, 0, 0, 0.9) 0px 1px 1px -1px;
 }
-
 @utility postcard-shadow {
 	box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 2px -1px, rgba(0, 0, 0, 0.9) 0px 1px 2px -1px;
 }
@@ -50,9 +52,6 @@
 		height: auto;
 	}
 }
-
-/* beautify text */
-body { text-rendering: optimizeLegibility; }
 
 /* disable mobile tap zoom, etc */
 html, body { touch-action: manipulation; }

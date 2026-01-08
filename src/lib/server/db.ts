@@ -1,19 +1,4 @@
 
-export type Order = {
-  id: string;
-  stripe_checkout_id: string | null;
-  stripe_payment_intent: string | null;
-  provider_order_id: string | null;
-  customer_email: string | null;
-  recipient_address: string | null; // encrypted JSON string
-  sender_address: string | null;
-  send_date: string | null;
-  front_image_url: string;
-  back_image_url: string;
-  reason?: 'system_error' | 'payment_fail' | 'fraud_detected';
-  status: 'draft' | 'paid' | 'confirmed'  | 'sent' | 'cancelled';
-  created_at?: string; // ISO timestamp, optional on insert
-};
 
 export function getDBClient(db: D1Database) {
   return {
@@ -110,4 +95,20 @@ export function getDBClient(db: D1Database) {
   }
 }
 
+// --- Types ---
 
+export type Order = {
+  id: string;
+  stripe_checkout_id: string | null;
+  stripe_payment_intent: string | null;
+  provider_order_id: string | null;
+  customer_email: string | null;
+  recipient_address: string | null; // encrypted JSON string
+  sender_address: string | null;
+  send_date: string | null;
+  front_image_url: string;
+  back_image_url: string;
+  reason?: 'system_error' | 'payment_fail' | 'fraud_detected';
+  status: 'draft' | 'paid' | 'confirmed'  | 'sent' | 'cancelled';
+  created_at?: string; // ISO timestamp, optional on insert
+};

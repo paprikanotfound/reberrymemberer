@@ -1,6 +1,6 @@
 import { PersistedState, StateHistory } from "runed" // adjust import path if different
 import type { CanvasContent, Stroke } from "./types"
-import { POSTCARD } from "$lib/app";
+import { POSTCARD } from "$lib";
 import { drawObjectCover, drawStokes } from "$lib/utils/canvas";
 import { loadImage } from "$lib/utils/images";
 import { base64ToBlob } from "$lib/utils/files";

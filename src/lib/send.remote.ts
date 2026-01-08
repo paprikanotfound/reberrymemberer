@@ -4,7 +4,7 @@ import { CheckoutRequestSchema, decodeAddressDetails } from "./types";
 import { Stripe } from "stripe"
 import { R2 } from "$lib/utils/r2";
 import { getDBClient } from "$lib/server/db";
-import { POSTCARD } from "$lib/app";
+import { POSTCARD } from "$lib";
 
 
 async function createStripeCheckoutSession(secret: string, origin: string, client_reference_id: string, expires_in: number) {

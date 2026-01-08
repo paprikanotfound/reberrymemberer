@@ -1,4 +1,4 @@
-import { createPrintOneClient, type AddressDetails, type OrderRequestPayload } from "$lib/server/apis/printone.js";
+import { createPrintOneClient, type AddressDetails, type OrderRequestPayload } from "$lib/server/printone.js";
 import { getDBClient } from "$lib/server/db";
 import { error } from "@sveltejs/kit";
 import Stripe from "stripe"
@@ -13,6 +13,7 @@ export async function POST({ platform, request }) {
   if (!event) return error(500, "Stripe signature is not valid");
   
   const db = getDBClient(platform!.env.DB);
+  
   const fulfillOrder = async (session: Stripe.Response<Stripe.Checkout.Session>)  => {
     const sessionOrderId = session.client_reference_id!;
 

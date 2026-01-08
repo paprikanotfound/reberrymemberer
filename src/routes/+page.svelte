@@ -2,7 +2,7 @@
 	import { browser } from "$app/environment";
 	import Postcard from "$lib/components/postcard.svelte";
 	import { m } from "$lib/paraglide/messages";
-	import { POSTCARD } from "$lib/app";
+	import { POSTCARD } from "$lib";
 	import { PersistedState } from "runed";
 	import { onMount } from "svelte";
 
