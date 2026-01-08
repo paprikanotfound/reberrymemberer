@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import Postcard from "$lib/components/postcard.svelte";
-	import { m } from "$lib/paraglide/messages";
 	import { POSTCARD } from "$lib";
 	import { PersistedState } from "runed";
 	import { onMount } from "svelte";
@@ -27,24 +26,24 @@
 <div class="p-3 sm:p-4 w-full h-full relative aspect-container flex flex-col">
   <div id="info" class:hidden={!infoPageVisible} class="flex-1 w-full flex flex-col items-start gap-8">
     <span>
-      (<button class="hover:underline" onclick={() => { infoPageVisible = false }}>{m.close()}</button>)
+      (<button class="hover:underline" onclick={() => { infoPageVisible = false }}>Close</button>)
     </span>
     <section class="leading-tight">
-      <p>{m.intro_paragraph()}</p>
+      <p>Reberrymemberer is a small postal experiment for thoughts too soft for the internet and too fleeting for a full letter. Send a postcard to someone far, to someone you miss, to your future self. Send a message the moment it comes, before it fades.</p>
       <br>
       <br>
-      <p class="text-sm">{m.details()}</p>
-      <p class="text-sm">{m.postcard_details({ cost_label: POSTCARD.cost_label })}</p>
-      <p class="text-sm">{m.shipping_info()} (<a href="{POSTCARD.url_delivery_times}" target="_blank" rel="noopener noreferrer">{m.delivery_times()}</a> →)</p>
+      <p class="text-sm">Details</p>
+      <p class="text-sm">{POSTCARD.cost_label}, A6, printed in the Netherlands, worldwide delivery.</p>
+      <p class="text-sm">Sent via priority mail by PostNL – Dutch Postal Services. (<a href="{POSTCARD.url_delivery_times}" target="_blank" rel="noopener noreferrer">Delivery times</a> →)</p>
       <br>
-      <p class="text-sm max-w-2xl italic">{m.notice_shipping()}</p>
+      <p class="text-sm max-w-2xl italic">Note: Once a postcard is handed over to PostNL, delivery is out of our control. We cannot offer refunds or replacements if an address is incorrect, incomplete, or if the postcard is delayed, lost, or returned. Please double-check the address before sending.</p>
       <br>
       <br>
-      <p class="text-sm">{m.credits()}</p>
-      <p class="text-sm">{m.credit_photography()} <a href="https://instagram.com/hoyeonwang/" target="_blank" class="italic">Wang Hoyeon</a></p>
-      <p class="text-sm">{m.credit_design()} <a href="https://paprika.fyi" target="_blank" class="italic">Paprika®</a></p>
+      <p class="text-sm">Credits</p>
+      <p class="text-sm">Photography <a href="https://instagram.com/hoyeonwang/" target="_blank" class="italic">Wang Hoyeon</a></p>
+      <p class="text-sm">Design & development <a href="https://paprika.fyi" target="_blank" class="italic">Paprika®</a></p>
       <br>
-      <p class="text-sm">{m.credit_contact()}</p>
+      <p class="text-sm">Contact</p>
       <p class="text-sm"><a href="mailto:support@paprika.fyi" target="_blank" class="italic">support(at)paprika.fyi</a></p>
     </section>
   </div> 
@@ -66,18 +65,18 @@
       back={samples[localIndex].back} 
     />
     <!-- <div class="flex flex-col gap-2">
-      <span class="self-center leading-none _text-center">{m.tagline()}</span>
+      <span class="self-center leading-none _text-center">Reberrymemberer – A small postal experiment.</span>
       <div class="w-full flex gap-2 justify-center items-center leading-none">
-        <a href="/send">{m.write()}</a> – <button onclick={() => { infoPageVisible = !infoPageVisible }}>{m.info()}</button>
+        <a href="/send">Write</a> – <button onclick={() => { infoPageVisible = !infoPageVisible }}>Info</button>
       </div>
     </div> -->
   </div>
   <div class="flex-1"></div>
   <div class:hidden={infoPageVisible} class="flex flex-col items-center py-8">
-    <div class="">{m.tagline()}</div>
+    <div class="">Reberrymemberer – A small postal experiment.</div>
     <div class="flex gap-2">
-      <span><a href="/send">{m.write()}</a>, </span>
-      <button onclick={() => { infoPageVisible = !infoPageVisible }}>{m.info()}</button>
+      <span><a href="/send">Write</a>, </span>
+      <button onclick={() => { infoPageVisible = !infoPageVisible }}>Info</button>
     </div>
   </div>
 </div>

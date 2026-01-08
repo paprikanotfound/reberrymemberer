@@ -22,7 +22,6 @@
 		"@cloudflare/vitest-pool-workers": "^0.8.71",
 		"@eslint/compat": "^1.2.5",
 		"@eslint/js": "^9.18.0",
-		"@inlang/paraglide-js": "^2.2.0",
 		"@sveltejs/adapter-auto": "^6.0.0",
 		"@sveltejs/adapter-cloudflare": "^7.0.5",
 		"@sveltejs/kit": "2.43.6",

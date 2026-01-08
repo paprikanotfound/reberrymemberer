@@ -5,7 +5,6 @@ import { R2 } from "$lib/utils/r2";
 import { getDBClient } from "$lib/server/db";
 import { decodeAddressDetails, POSTCARD } from "$lib";
 import z from "zod";
-import { m } from "./paraglide/messages";
 
 
 async function createStripeCheckoutSession(secret: string, origin: string, client_reference_id: string, expires_in: number) {
@@ -34,24 +33,24 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
 
 
 const AddressDetailsSchema = z.object({
-  name: z.string().min(1, m["error.name_required"]()),
-  address: z.string().min(1, m["error.address_required"]()),
+  name: z.string().min(1, "Name is required"),
+  address: z.string().min(1, "Address is required"),
   addressLine2: z.string().optional().or(z.literal('')),
-  postalCode: z.string().min(1, m["error.postal_required"]()),
-  city: z.string().min(1, m["error.city_required"]()),
-  country: z.string().length(2, m["error.country_required"]()),
+  postalCode: z.string().min(1, "Postal code is required"),
+  city: z.string().min(1, "City is required"),
+  country: z.string().length(2, "Country is required"),
 });
 
 const sendDateSchema = z
   .string()
   // ✅ Match YYYY-MM-DD format
-  .regex(/^\d{4}-\d{2}-\d{2}$/, { message: m["error.date_format"](), })
+  .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Date must be in YYYY-MM-DD format" })
   // ✅ Must be today or later
   .refine((dateStr) => {
     const today = new Date().toISOString().split('T')[0];
     return dateStr >= today;
   }, {
-    message: m["error.date_future"](),
+    message: "Send date must be today or in the future",
   });
 
 const CheckoutRequestSchema = z.object({
