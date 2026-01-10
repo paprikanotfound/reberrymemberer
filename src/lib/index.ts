@@ -1,5 +1,6 @@
-import type { AddressDetails } from "./send.remote";
+import type { AddressDetails } from "./checkout.remote";
 
+export { createPersistedScribble, clearPersistedScribble, type PersistedScribble, type ScribbleContent } from './components/scribble-state.svelte';
 
 export const POSTCARD = { 
   cost_label: "3€",

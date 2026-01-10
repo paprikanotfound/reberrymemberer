@@ -6,6 +6,9 @@
 	import { base64ToBlob, fileToBase64, normalizeFiles } from '$lib/utils/files';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { PersistedPage } from './persisted-page.svelte';
+  
+  // Constants
+  const MIN_DISTANCE = .5; // Adjust to your desired precision
 
 
   interface Props {
@@ -21,8 +24,6 @@
 		inPenMode?: boolean;
 		[key: string]: any;
   }
-
-  const MIN_DISTANCE = .5; // Adjust to your desired precision
 
   let { 
     persistedPage=$bindable(),
@@ -130,9 +131,6 @@
       const maxOffsetY = Math.max(0, (elmBg.clientHeight - elmBox.clientHeight) / 2);
       const newY = Math.max(-maxOffsetY, Math.min(initOffsetY + deltaY, maxOffsetY));
       activeOffset.y = (newY / elmBg.clientHeight) * 100;
-      
-      // if (imgWidth > elmBox.clientWidth && imgWidth >= imgHeight) {
-      // } else if (imgHeight > elmBox.clientHeight) {}
 
     } else if (tool === "brush" && activeStroke) {
       
@@ -168,7 +166,6 @@
   function handlePointerUp(e: PointerEvent) { 
     if (e.pointerId == mainPointer) finishGesture(); 
   }
-
 
   function finishGesture(cancelled: boolean = false) {
     if (!cancelled) {
@@ -383,9 +380,6 @@
     elmBox?.addEventListener('pointerdown', handlePointerDown, { passive: false });
     elmBox?.addEventListener('pointermove', handlePointerMove, { passive: false });
     window.addEventListener('pointerup', handlePointerUp);
-
-
-
     return () => {
       elmBox?.removeEventListener('pointerdown', handlePointerDown);
       elmBox?.removeEventListener('pointermove', handlePointerMove);

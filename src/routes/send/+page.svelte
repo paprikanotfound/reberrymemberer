@@ -6,7 +6,7 @@
 	import { createCanvasTools } from "$lib/components/canvas/persisted-tools.svelte";
 	import Editor from "$lib/components/editor.svelte";
 	import { downloadBlob } from "$lib/utils/images";
-	import { createCheckout } from "$lib/send.remote";
+	import { createCheckout } from "$lib/checkout.remote";
 	import { uploadContent } from "$lib/utils/file-upload";
 	import { onMount, untrack } from "svelte";
 	import CanvasToolbar from "$lib/components/canvas/toolbar.svelte";

@@ -8,6 +8,10 @@ export type Stroke = {
     w: number;
     h: number;
   };
+  targetBox?: {
+    w: number;
+    h: number;
+  };
   color: string;
   options: StrokeOptions;
 }
