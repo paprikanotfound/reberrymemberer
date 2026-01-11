@@ -2,7 +2,7 @@
 // Constants
 const API_URL_POSTCARDS = 'https://api.lob.com/v1/postcards';
 
-export function initPostalProvider({ apiKey, apiUrl }: { apiKey: string, apiUrl: string }) {
+export function initPostalProvider({ apiKey }: { apiKey: string }) {
   return {
     createNewOrder: async (payload: PostcardPayload) => {
 
@@ -130,8 +130,6 @@ export type PostcardPayload = {
   fsc: boolean;
   print_speed: "core";
 };
-
-
 
 export type PostcardResponse = {
   id: string;

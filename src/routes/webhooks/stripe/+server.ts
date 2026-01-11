@@ -47,10 +47,7 @@ async function fulfillOrder(
       fsc: false,
       print_speed: 'core',
     }
-    const lob = initPostalProvider({
-      apiKey: platform!.env.PRINT_ONE_API,
-      apiUrl: platform!.env.PRINT_ONE_API_URL
-    });
+    const lob = initPostalProvider({ apiKey: platform!.env.LOB_API_SECRET });
 
     const resp = await lob.createNewOrder(payload);
     if (!resp.ok) {
