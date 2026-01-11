@@ -9,7 +9,7 @@ export type Stroke = {
     w: number;
     h: number;
   };
-  targetBox: {
+  targetBox?: {
     w: number;
     h: number;
   };

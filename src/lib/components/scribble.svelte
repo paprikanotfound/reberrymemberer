@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { Stroke } from './canvas/types';
   import { getStroke } from 'perfect-freehand';
   import { drawGesture } from '$lib/actions/drawGesture';
   import { zoomPanGesture, type ZoomPanState } from '$lib/actions/zoomPanGesture';
@@ -9,6 +8,7 @@
   import { base64ToBlob, fileToBase64, normalizeFiles } from '$lib/utils/files';
 	import { MediaQuery, SvelteSet } from 'svelte/reactivity';
 	import { untrack } from 'svelte';
+	import type { Stroke } from './scribble-state.svelte';
 
   interface Props {
     strokes?: Stroke[];

@@ -1,7 +1,142 @@
-import { createPrintOneClient, type AddressDetails, type OrderRequestPayload } from "$lib/server/printone.js";
-import { getDBClient } from "$lib/server/db";
-import { error } from "@sveltejs/kit";
+import { initDB, type BaseAddress } from "$lib/server/db";
+import { error, json } from "@sveltejs/kit";
 import Stripe from "stripe"
+import { initPostalProvider, type PostcardPayload, type PostcardResponse } from "$lib/server/lob.js";
+import { isErrorRetryableD1, tryWhile } from "$lib/utils/retry.js";
+import { initLucia } from "$lib/server/lucia.js";
+
+
+async function fulfillOrder(
+  session: Stripe.Response<Stripe.Checkout.Session>,
+  platform: Readonly<App.Platform>,
+) {
+  // TODO: handle different quantities & item types
+
+  const db = initDB(platform!.env.DB);
+  const sessionOrderId = session.client_reference_id;
+  const email = session.customer_email;
+
+  if (!sessionOrderId) throw new Error("Missing client_reference_id!");
+
+  // Retrieve unpaid order and update status.
+  const order = await tryWhile(
+    () => db.order.setOrderStatusAsPaidOrSkip({
+      orderId: sessionOrderId,
+      email: session.customer_email,
+      paymentIntent: session.payment_intent!.toString(),
+    }), 
+    isErrorRetryableD1
+  );
+  if (!order) {
+    throw new Error("Order has been fullfilled or not found!" + sessionOrderId);
+  }
+
+  try {
+    // Create new postcard order
+    const recipientAddress: BaseAddress = JSON.parse(order.recipient_address);
+    const payload: PostcardPayload = {
+      description: `Postcard for order ${order.id}`,
+      send_date: order.send_date ?? undefined,
+      to: recipientAddress,
+      from: 'adr_d07414d6c6ff34b7', // default Lob address
+      front: `${platform!.env.R2_DELIVER_URL}/${order.front_image_url}`,
+      back: `${platform!.env.R2_DELIVER_URL}/${order.back_image_url}`,
+      size: "4x6",
+      mail_type: 'usps_first_class',
+      use_type: 'operational',
+      fsc: false,
+      print_speed: 'core',
+    }
+    const lob = initPostalProvider({
+      apiKey: platform!.env.PRINT_ONE_API,
+      apiUrl: platform!.env.PRINT_ONE_API_URL
+    });
+
+    const resp = await lob.createNewOrder(payload);
+    if (!resp.ok) {
+      throw new Error(`Error creating postcard order! Status: ${resp}`);
+    }
+    const respContent: PostcardResponse = await resp.json()
+
+    // Update client order status & id
+    await tryWhile(
+      () => db.order.setOrderAsConfirmedWithProviderId({
+        provider_order_id: respContent.id,
+        order_id: order.id
+      }), 
+      isErrorRetryableD1
+    );
+    
+  } catch (error) {
+    console.error(error);
+
+    await tryWhile(
+      () => db.order.setOrderCancelled({ orderId: sessionOrderId, reason: "system_error" }), 
+      isErrorRetryableD1
+    );
+  }
+
+  // Automatically register new users
+  if (email) {
+    const lucia = initLucia(platform.env.DB);
+    await tryWhile(
+      () => lucia.auth.registerUser(email), 
+      isErrorRetryableD1
+    );
+  }
+
+}
+
+const stripeWebhookHandler = (stripe: Stripe, platform: Readonly<App.Platform>) => ({
+  session: {
+    sessionExpired: async (event: Stripe.Event) => { },
+    sessionCompleted: async (event: Stripe.Event) => {
+      const session = event.data.object as Stripe.Checkout.Session
+      const sessionExpanded = await stripe.checkout.sessions.retrieve(
+        session.id, { expand: ['line_items.data.price', 'line_items.data.price.product'], }
+      )
+      if (session.payment_status === 'paid') {
+        await fulfillOrder(sessionExpanded, platform);
+      }
+    },
+    asyncPaymentSucceeded: async (event: Stripe.Event) => {
+      const session = event.data.object as Stripe.Checkout.Session
+      const sessionExpanded = await stripe.checkout.sessions.retrieve(
+        session.id, { expand: ['line_items.data.price', 'line_items.data.price.product'], }
+      );
+      await fulfillOrder(sessionExpanded, platform);
+    },
+    asyncPaymentFailed: async (event: Stripe.Event) => {
+      // TODO: notify user by email
+    },
+  },
+  charge: {
+    refunded: async (event: Stripe.ChargeRefundedEvent) => {
+      // TODO: handle refunds
+      // const charge = event.data.object;
+      // const isFullRefund = charge.amount_refunded === charge.amount;
+      // const isPartialRefund = charge.amount_refunded > 0 && !isFullRefund;
+      // const paymentIntent = charge.payment_intent!.toString();
+      // const db = initDB(platform!.env.DB);
+      // await db.payments.markRefunded(paymentIntent);
+    }
+  },
+  radar: {
+    earlyFraudWarning: async (event: Stripe.RadarEarlyFraudWarningCreatedEvent) => {
+      const efw = event.data.object;
+      const efwWithPayIntent = await stripe.radar.earlyFraudWarnings.retrieve(efw.id, { expand: ['payment_intent'] })
+      // An EFW is actionable if it has not 
+      // received a dispute and has not been fully refunded. 
+      // You may wish to proactively refund a charge that receives 
+      // an EFW, in order to avoid receiving a dispute later.
+      if (efwWithPayIntent.actionable) {
+        await stripe.refunds.create({ charge: efw.charge.toString(), reason: 'fraudulent' });
+        // const db = initDB(platform!.env.DB);
+        // await db.payments.markRefunded(efwWithPayIntent.payment_intent!.toString());
+      }
+    }
+  }
+});
 
 export async function POST({ platform, request }) {
   const stripeSignSecret = platform!.env.STRIPE_API_SIGN_SECRET;
@@ -10,130 +145,39 @@ export async function POST({ platform, request }) {
   const signature = request.headers.get('stripe-signature');
   const event = await stripe.webhooks.constructEventAsync(rawBody, signature!, stripeSignSecret);
 
-  if (!event) return error(500, "Stripe signature is not valid");
-  
-  const db = getDBClient(platform!.env.DB);
-  
-  const fulfillOrder = async (session: Stripe.Response<Stripe.Checkout.Session>)  => {
-    const sessionOrderId = session.client_reference_id!;
+  if (!event) return error(500, "Unauthorized request");
 
-    // Update order status
-    const order = await db.setOrderStatusAsPaidOrSkip({
-      orderId: sessionOrderId,
-      email: session.customer_email, 
-      paymentIntent: session.payment_intent!.toString(), 
-    });
-
-    if (!order) {
-      console.error('Order already fullfilled or not found!', );
-      return
-    }
-    
-    if (!order.recipient_address || !order.sender_address) {
-      console.error('Order missing address details', session.client_reference_id);
-      await db.setOrderCancelled({ orderId: sessionOrderId, reason: "system_error" });
-      // TODO dev email to notify support
-      return
-    }
-
-    // Workaround for print.one API error ("address does not contain a house number").
-    // Merge address lines before submitting.
-    let senderAddress: AddressDetails = JSON.parse(order.sender_address)
-    senderAddress.address = `${senderAddress.address} ${senderAddress.addressLine2}`
-    senderAddress.addressLine2 = ''
-
-    let recipientAddress: AddressDetails = JSON.parse(order.recipient_address)
-    recipientAddress.address = `${recipientAddress.address} ${recipientAddress.addressLine2}`
-    recipientAddress.addressLine2 = ''
-
-    const payload: OrderRequestPayload = {
-      templateId: platform!.env.PRINT_ONE_TEMPLATE_ID,
-      sendDate: order.send_date ?? undefined,
-      sender: senderAddress,
-      recipient: recipientAddress,
-      finish: "MATTE",
-      mergeVariables: {
-        artfront: `${platform!.env.R2_DELIVER_URL}/${order.front_image_url}`,
-        artback: `${platform!.env.R2_DELIVER_URL}/${order.back_image_url}`,
+  const webhook = stripeWebhookHandler(stripe, platform!);
+  try {
+    switch (event.type) {
+      case 'checkout.session.expired': {
+        await webhook.session.sessionExpired(event);
+        break
+      }
+      case 'checkout.session.completed': {
+        await webhook.session.sessionCompleted(event);
+        break
+      }
+      case 'checkout.session.async_payment_succeeded': {
+        await webhook.session.asyncPaymentSucceeded(event);
+        break
+      }
+      case 'charge.refunded': {
+        await webhook.charge.refunded(event);
+        break
+      }
+      case 'checkout.session.async_payment_failed': {
+        await webhook.session.asyncPaymentFailed(event);
+        break
+      }
+      case 'radar.early_fraud_warning.created': {
+        await webhook.radar.earlyFraudWarning(event);
+        break
       }
     }
-    
-    // Create new provider order (print.one)
-    const printOne = createPrintOneClient({
-      apiKey: platform!.env.PRINT_ONE_API, 
-      apiUrl: platform!.env.PRINT_ONE_API_URL
-    });
-    const { response, data } = await printOne.createNewOrder(payload);
-
-    if (!response.ok) {
-      console.error('print.one error:', data, session.client_reference_id);
-      await db.setOrderCancelled({ orderId: sessionOrderId, reason: "system_error" });
-      return
-    }
-
-    // Update order details
-    const result = await db.setOrderAsConfirmedWithProviderId({ 
-      provider_order_id: data.id, 
-      order_id: order.id
-    });
-    if (result.meta.changes == 0) {
-      console.error('Failed to update order with provider id!', order.id);
-      return
-    }
+  } catch (err) {
+    error(500, { message: JSON.stringify(err ?? 'Error handling stripe webhook') });
   }
 
-  switch (event.type) {
-    case 'checkout.session.expired': {
-      const session = event.data.object as Stripe.Checkout.Session
-      const sessionOrderId = session.client_reference_id!
-      await db.setOrderAsExpired({ orderId: sessionOrderId });
-      break
-    }
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session
-      const sessionWithLineItems = await stripe.checkout.sessions.retrieve(
-        session.id, { expand: ['line_items.data.price'], }
-      )
-      // Create a new order
-      // await createOrder(platform!.env.DB, sessionWithLineItems)
-      // Check if the order is paid (for example, from a card payment)
-      //
-      // A delayed notification payment will have an `unpaid` status, as
-      // you're still waiting for funds to be transferred from the customer's
-      // account.
-      if (session.payment_status === 'paid') {
-        await fulfillOrder(sessionWithLineItems)
-      }
-      break
-    }
-    case 'checkout.session.async_payment_succeeded': {
-      const session = event.data.object as Stripe.Checkout.Session
-      const sessionExpanded = await stripe.checkout.sessions.retrieve(
-        session.id, { expand: ['line_items.data.price'], }
-      );
-      await fulfillOrder(sessionExpanded);
-      break
-    }
-    case 'checkout.session.async_payment_failed': {
-      const session = event.data.object as Stripe.Checkout.Session
-      const sessionOrderId = session.client_reference_id!;
-      await db.setOrderFailedPayment({ orderId: sessionOrderId });
-      break
-    }
-    case 'radar.early_fraud_warning.created': {
-      const efw = event.data.object as Stripe.Radar.EarlyFraudWarning
-      const efwWithPayIntent = await stripe.radar.earlyFraudWarnings.retrieve(efw.id, { expand: ['payment_intent'] })
-      // An EFW is actionable if it has not 
-      // received a dispute and has not been fully refunded. 
-      // You may wish to proactively refund a charge that receives 
-      // an EFW, in order to avoid receiving a dispute later.
-      if (efwWithPayIntent.actionable) {
-        await stripe.refunds.create({ charge: efw.charge.toString(), reason: 'fraudulent' })
-        await db.setOrderCancelledFraud({ paymentIntent: efw.payment_intent!.toString() })
-      }
-      break
-    }
-  }
-
-  return new Response(null, { status: 200 })
+  return json({ ok: true }, { status: 200 });
 }

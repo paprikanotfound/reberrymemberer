@@ -1,17 +1,17 @@
 import { form, getRequestEvent } from "$app/server"
 import { error, redirect } from "@sveltejs/kit";
 import { Stripe } from "stripe"
-import { getDBClient } from "$lib/server/db";
+import { initDB, type BaseAddress } from "$lib/server/db";
 import { POSTCARD_DETAILS, ROUTES } from "$lib";
-import { AddressDetailsSchema } from "./checkout.types";
+import { CheckoutSchema } from "./checkout.types";
 import { isErrorRetryableD1, isErrorRetryableR2, tryWhile } from "./utils/retry";
 
 // Constants
 const BUCKET_PATHS = {
-  // Delete objects after 30 day(s): "tmp/30/*" 
-  uploadCheckoutAssetPath: (filename: string, isDevEnv: boolean) => `tmp/30/reberrymemberer/${isDevEnv ?"dev":"prod"}/${filename}`,
+  // Delete objects after 90 day(s): "tmp/90/*"
+  // To allow time for customer support issues.
+  uploadCheckoutAssetPath: (filename: string, isDevEnv: boolean) => `tmp/90/reberrymemberer/${isDevEnv ?"dev":"prod"}/${filename}`,
 }
-
 
 async function createStripeCheckoutSession(secret: string, origin: string, client_reference_id: string, expires_in: number) {
   const stripe = new Stripe(secret, { apiVersion: "2025-06-30.basil" })
@@ -23,8 +23,8 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
         price_data: {
           currency: 'eur',
           product_data: {
-            name: 'Reberrymemberer Postcard',
-            description: 'Postal services. A6 postcard.'
+            name: 'A6 Postcard',
+            description: 'Reberrymemberer Postal Services.'
           },
           unit_amount: POSTCARD_DETAILS.cost_unit,
         },
@@ -38,7 +38,7 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
   return session
 }
 
-export const createCheckout = form(AddressDetailsSchema, async (request) => {
+export const createCheckout = form(CheckoutSchema, async (request) => {
   const { platform, url } = getRequestEvent();
   const devEnv = platform!.env.ENV == "development";
   const clientRefId = crypto.randomUUID();
@@ -66,12 +66,20 @@ export const createCheckout = form(AddressDetailsSchema, async (request) => {
   );
 
   // Create new order
-  const db = getDBClient(platform!.env.DB);
+  const db = initDB(platform!.env.DB);
   const resp = await tryWhile(
-    () => db.createNewOrder({
+    () => db.order.createOrder({
       id: clientRefId,
       stripe_checkout_id: session.id,
-      recipient_address: JSON.stringify(request),
+      recipient_address: JSON.stringify({
+        name: request.name,
+        address_line1: request.address,
+        address_line2: request.addressLine2,
+        address_city: request.city,
+        address_state: request.state,
+        address_zip: request.postalCode,
+        address_country: request.country,
+      } satisfies BaseAddress),
       send_date: request.sendDate,
       front_image_url: keyFront,
       back_image_url: keyBack,
@@ -83,4 +91,4 @@ export const createCheckout = form(AddressDetailsSchema, async (request) => {
   if (!resp) error(404, 'Failed to create order');
 
   redirect(301, session.url);
-})
+});

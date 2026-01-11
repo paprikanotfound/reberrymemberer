@@ -1,5 +1,5 @@
+import type { Stroke } from '$lib/components/scribble-state.svelte';
 import type { Action } from 'svelte/action';
-import type { Stroke } from '$lib/components/canvas/types';
 
 const MIN_DISTANCE = 0.5; // Precision for point sampling
 

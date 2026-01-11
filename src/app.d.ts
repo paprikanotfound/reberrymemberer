@@ -1,5 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
+import type { SessionRow, UserRow } from "$lib/server/lucia";
+
 declare global {
 	namespace App {
         interface Platform {
@@ -23,6 +25,10 @@ declare global {
             }
             cf: CfProperties
             ctx: ExecutionContext
+        }
+        interface Locals {
+            user: UserRow | null;
+            session: SessionRow | null;
         }
     }
 }

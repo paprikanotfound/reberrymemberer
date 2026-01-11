@@ -31,8 +31,11 @@
 	label {
 		@apply flex flex-row gap-2 max-sm:justify-between text-base  items-center;
 	}
-	.issue {
+	.form-issue {
 		@apply text-red-700 text-sm;
+	}
+	.form-tip {
+		@apply text-xs italic;
 	}
 	.btn-ui {
 		@apply aspect-square w-10 sm:min-w-8 p-2 flex items-center justify-center rounded-xl backdrop-blur-sm
