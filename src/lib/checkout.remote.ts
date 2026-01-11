@@ -2,9 +2,9 @@ import { form, getRequestEvent } from "$app/server"
 import { error, redirect } from "@sveltejs/kit";
 import { Stripe } from "stripe"
 import { getDBClient } from "$lib/server/db";
-import { POSTCARD_DETAILS, ROUTES } from "$lib";
+import { BUCKET_PATHS, POSTCARD_DETAILS, ROUTES } from "$lib";
 import { AddressDetailsSchema } from "./checkout.types";
-import { isErrorRetryableD1, tryWhile } from "./utils/retry";
+import { isErrorRetryableD1, isErrorRetryableR2, tryWhile } from "./utils/retry";
 
 
 async function createStripeCheckoutSession(secret: string, origin: string, client_reference_id: string, expires_in: number) {
@@ -17,8 +17,8 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
         price_data: {
           currency: 'eur',
           product_data: {
-            name: 'Postcard',
-            description: 'Postal service. A6 postcard.'
+            name: 'Reberrymemberer Postcard',
+            description: 'Postal services. A6 postcard.'
           },
           unit_amount: POSTCARD_DETAILS.cost_unit,
         },
@@ -34,25 +34,30 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
 
 export const createCheckout = form(AddressDetailsSchema, async (request) => {
   const { platform, url } = getRequestEvent();
+  const devEnv = platform!.env.ENV == "development";
   const clientRefId = crypto.randomUUID();
-  const expiresIn = platform!.env.ENV == "development" ? 60 * 30 : 60 * 60 * 1
 
   // Create a Stripe session
   const session = await createStripeCheckoutSession(
     platform!.env.STRIPE_API_SECRET,
     url.origin,
     clientRefId,
-    expiresIn,
+    60 * 60 * 1,
   );
   if (!session.url) error(404, 'No checkout url')
 
   // Upload postcard page images
-  const envPath = platform!.env.ENV == "development" ? 'dev' : 'prod'
-  const keyFront = `tmp/30/reberrymemberer/${envPath}/${clientRefId}_front.jpg`;
-  const keyBack = `tmp/30/reberrymemberer/${envPath}/${clientRefId}_back.jpg`;
+  const keyFront = BUCKET_PATHS.uploadCheckoutAssetPath(`${clientRefId}_front.jpg`, devEnv);
+  const keyBack = BUCKET_PATHS.uploadCheckoutAssetPath(`${clientRefId}_back.jpg`, devEnv);
 
-  await platform!.env.R2.put(keyFront, await request.frontImage.arrayBuffer())
-  await platform!.env.R2.put(keyBack, await request.backImage.arrayBuffer())
+  await tryWhile(
+    async () => platform!.env.R2.put(keyFront, await request.frontImage.arrayBuffer()),
+    isErrorRetryableR2,
+  );
+  await tryWhile(
+    async () => platform!.env.R2.put(keyBack, await request.backImage.arrayBuffer()),
+    isErrorRetryableR2,
+  );
 
   // Create new order
   const db = getDBClient(platform!.env.DB);

@@ -125,7 +125,7 @@ export function jitterBackoff(
  * See https://developers.cloudflare.com/durable-objects/best-practices/error-handling/.
  * @param err
  */
-export function isErrorRetryable(err: unknown): boolean {
+export function isErrorRetryableDO(err: unknown): boolean {
   const msg = String(err);
   return (
     Boolean((err as any)?.retryable) &&
@@ -148,6 +148,63 @@ export function isErrorRetryableD1(err: unknown, nextAttempt: number) {
   if (nextAttempt <= 5 && isRetryableError) {
     return true;
   }
+  return false;
+}
+
+/**
+ * Returns true if the given error is retryable according to R2 error handling.
+ * See https://developers.cloudflare.com/r2/api/error-codes/
+ * See https://developers.cloudflare.com/r2/platform/troubleshooting/
+ * @param err The error thrown by the R2 API call
+ * @param nextAttempt The next attempt number (1-based)
+ */
+export function isErrorRetryableR2(err: unknown, nextAttempt: number): boolean {
+  const MAX_RETRIES = 5;
+  if (nextAttempt > MAX_RETRIES) return false;
+
+  if (!err || typeof err !== "object") return false;
+
+  const status = (err as any).status || (err as any).statusCode;
+  const code = (err as any).code;
+  const message = (err as any).message || String(err);
+
+  // Retry on 5XX server errors
+  if (status && status >= 500 && status < 600) return true;
+
+  // Retry on specific R2 error codes
+  // 10001 - InternalError (500)
+  // 10043 - ServiceUnavailable (503)
+  // 10058 - TooManyRequests (429)
+  const retryableR2Codes = [10001, 10043, 10058];
+  if (code && retryableR2Codes.includes(Number(code))) return true;
+
+  // Retry on rate limiting (429)
+  if (status === 429) return true;
+
+  // Retry on transient network errors
+  // 10013 - IncompleteBody (400)
+  // 10054 - ClientDisconnect (400)
+  const transientErrorMessages = [
+    "InternalError",
+    "ServiceUnavailable",
+    "TooManyRequests",
+    "IncompleteBody",
+    "ClientDisconnect",
+    "ECONNRESET",
+    "ETIMEDOUT",
+    "EAI_AGAIN",
+    "timeout",
+    "temporarily unavailable",
+  ];
+
+  if (
+    transientErrorMessages.some((errMsg) =>
+      message.toLowerCase().includes(errMsg.toLowerCase())
+    )
+  ) {
+    return true;
+  }
+
   return false;
 }
 
