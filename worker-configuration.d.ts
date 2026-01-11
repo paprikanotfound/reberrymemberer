@@ -5,18 +5,18 @@ declare namespace Cloudflare {
 	interface Env {
 		ENV: string;
 		RESEND_API: string;
-		PRINT_ONE_API: string;
+		
+        PRINT_ONE_API: string;
 		PRINT_ONE_API_URL: string;
 		PRINT_ONE_TEMPLATE_ID: string;
-		STRIPE_API_PUB_KEY: string;
+		
+        STRIPE_API_PUB_KEY: string;
 		STRIPE_API_SECRET: string;
 		STRIPE_API_SIGN_SECRET: string;
-		R2_ACCESS_KEY_ID: string;
-		R2_SECRET_ACCESS_KEY: string;
-		R2_DELIVER_URL: string;
+		
+        R2_DELIVER_URL: string;
 		R2_BUCKET: string;
-		R2_ENDPOINT: string;
-		R2_ACCOUNT_ID: string;
+        
 		R2: R2Bucket;
 		DB: D1Database;
 		ASSETS: Fetcher;

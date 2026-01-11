@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createPersistedScribble, type ScribbleContent } from "$lib";
+	import { createPersistedScribble, POSTCARD_DETAILS, type ScribbleContent } from "$lib";
 	import { createCheckout } from "$lib/checkout.remote";
 	import { AddressDetailsSchema } from "$lib/checkout.types";
 	import Scribble from "$lib/components/scribble.svelte";
@@ -8,10 +8,6 @@
 	import { base64ToBlob } from "$lib/utils/files";
 	import { loadImage } from "$lib/utils/images";
   import { onMount, tick, untrack } from 'svelte';
-
-  // Constants
-  const TARGET_WIDTH = 1819;
-  const TARGET_HEIGHT = 1311
 
   let penMode = $state(false);
   
@@ -37,8 +33,8 @@
   async function exportImage(content: ScribbleContent, type?: string, quality?: number) {
     return new Promise<Blob>(async (res, rej) => {
       const canvas = document.createElement("canvas");
-      canvas.width = TARGET_WIDTH;
-      canvas.height = TARGET_HEIGHT;
+      canvas.width = POSTCARD_DETAILS.size.w;
+      canvas.height = POSTCARD_DETAILS.size.h;
       // ctx
       const ctx = canvas.getContext("2d");
       if (!ctx) return rej("No 2D context");
@@ -131,12 +127,12 @@
       <span>001</span>
       <span>Front</span>
     </div>
-    <div class="w-full" style="aspect-ratio: {TARGET_WIDTH/TARGET_HEIGHT};">
+    <div class="w-full" style="aspect-ratio: {POSTCARD_DETAILS.size.w/POSTCARD_DETAILS.size.h};">
       <Scribble
         class="w-full h-full"
         showBackgroundSelector={true}
-        targetWidth={TARGET_WIDTH}
-        targetHeight={TARGET_HEIGHT}
+        targetWidth={POSTCARD_DETAILS.size.w}
+        targetHeight={POSTCARD_DETAILS.size.h}
         bind:strokes={scribbleFront.content.strokes}
         bind:color={scribbleFront.content.color}
         bind:size={scribbleFront.content.size}
@@ -155,11 +151,11 @@
       <span>002</span>
       <span>Back</span>
     </div>
-    <div class="w-full" style="aspect-ratio: {TARGET_WIDTH/TARGET_HEIGHT};">
+    <div class="w-full" style="aspect-ratio: {POSTCARD_DETAILS.size.w/POSTCARD_DETAILS.size.h};">
       <Scribble
         class="w-full h-full"
-        targetWidth={TARGET_WIDTH}
-        targetHeight={TARGET_HEIGHT}
+        targetWidth={POSTCARD_DETAILS.size.w}
+        targetHeight={POSTCARD_DETAILS.size.h}
         bind:strokes={scribbleBack.content.strokes}
         bind:color={scribbleBack.content.color}
         bind:size={scribbleBack.content.size}
