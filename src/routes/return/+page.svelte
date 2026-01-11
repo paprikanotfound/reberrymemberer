@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { clearPersistedPage } from "$lib/components/canvas/persisted-page.svelte";
-  clearPersistedPage("front")
-  clearPersistedPage("back")
 </script>
 
 <div class="p-4 flex flex-col gap-4">

@@ -6,12 +6,13 @@
   import { fade, scale } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import { resizeImage } from '$lib/utils/images';
-  import { normalizeFiles } from '$lib/utils/files';
+  import { base64ToBlob, fileToBase64, normalizeFiles } from '$lib/utils/files';
 	import { MediaQuery, SvelteSet } from 'svelte/reactivity';
+	import { untrack } from 'svelte';
 
   interface Props {
     strokes?: Stroke[];
-    backgroundImageUrl?: string | null;
+    backgroundImage?: string | null;
     color?: string;
     size?: number;
     class?: string;
@@ -28,7 +29,7 @@
 
   let {
     strokes = $bindable([]),
-    backgroundImageUrl = $bindable<string | null>(null),
+    backgroundImage = $bindable<string | null>(null),
     color = $bindable('#000000'),
     size = $bindable(5),
     targetWidth = 1819,
@@ -52,6 +53,45 @@
   let activeStroke: Stroke | undefined = $state();
   let isFullscreen = $state(false);
 
+  // Internal state for display URL (converted from base64)
+  let displayUrl: string | null = $state(null);
+
+  // Convert base64 to blob URL when backgroundImageUrl changes
+  $effect(() => {
+    backgroundImage;
+    untrack(() => {
+      // Clean up previous display URL
+      if (displayUrl) {
+        URL.revokeObjectURL(displayUrl);
+        displayUrl = null;
+      }
+  
+      // Convert base64 to blob URL for display
+      if (backgroundImage && backgroundImage.startsWith('data:')) {
+        try {
+          const blob = base64ToBlob(backgroundImage);
+          displayUrl = URL.createObjectURL(blob);
+  
+          // Update img element if it exists
+          if (elmBg) {
+            elmBg.src = displayUrl;
+          }
+        } catch (e) {
+          console.error('Failed to convert base64 to blob URL:', e);
+        }
+      }
+    })
+  });
+
+  // Cleanup on unmount
+  $effect(() => {
+    return () => {
+      if (displayUrl) {
+        URL.revokeObjectURL(displayUrl);
+      }
+    };
+  });
+
   // Zoom and pan state for fullscreen mode
   let zoomPanState = $state<ZoomPanState>({ scale: 1, panX: 0, panY: 0, isGestureActive: false });
 
@@ -68,6 +108,7 @@
 
   // Detect if mobile based on screen width
   const isMobile = new MediaQuery('max-width: 640px');
+  
 
   function handleStrokeComplete(stroke: Stroke) {
     if (activeTool === 'draw') {
@@ -123,14 +164,12 @@
     eraserStroke = undefined;
   }
 
-  function undo() {
-    onUndo?.();
-  }
+  function undo() { onUndo?.(); }
 
-  function redo() {
-    onRedo?.();
-  }
 
+  function redo() { onRedo?.(); }
+
+  
   function toggleFullscreen() {
     isFullscreen = !isFullscreen;
     if (isFullscreen) {
@@ -160,7 +199,11 @@
   }
 
   function clearBackgroundImage() {
-    backgroundImageUrl = null;
+    backgroundImage = null;
+    if (displayUrl) {
+      URL.revokeObjectURL(displayUrl);
+      displayUrl = null;
+    }
     if (elmBg) elmBg.src = '';
     expandedTool = null;
   }
@@ -173,26 +216,20 @@
     if (normalized.length === 0) return;
 
     const resized = await resizeImage(normalized[0]);
-    const url = URL.createObjectURL(resized);
+    const base64 = await fileToBase64(resized);
 
-    backgroundImageUrl = url;
-    if (elmBg) {
-      elmBg.onload = () => URL.revokeObjectURL(url);
-      elmBg.onerror = () => URL.revokeObjectURL(url);
-      elmBg.src = url;
-    }
+    // Store as base64 for persistence
+    backgroundImage = base64;
 
     // Clear input element
     if (elmInputBg) elmInputBg.value = '';
   }
 
-  function handleTwoFingerTap() {
-    undo();
-  }
+  function handleTwoFingerTap() { undo(); }
 
-  function handleZoomPanChange(state: ZoomPanState) {
-    zoomPanState = state;
-  }
+  
+  function handleZoomPanChange(state: ZoomPanState) { zoomPanState = state; }
+
 
   function getSvgPathFromStroke(str: Stroke) {
     const stroke = getStroke(str.points, str.options);
@@ -211,9 +248,7 @@
     return d.join(" ");
   }
 
-  function clear() {
-    strokes = [];
-  }
+  function clear() { strokes = []; }
 
 </script>
 
@@ -305,13 +340,13 @@
           <button
             onclick={selectBackgroundImage}
             class="btn-ui"
-            class:selected={backgroundImageUrl !== null}
+            class:selected={backgroundImage !== null}
             aria-label="Select background image"
             transition:scale={{ duration: 200, start: 0.8 }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image-icon lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
           </button>
-          {#if backgroundImageUrl !== null}
+          {#if backgroundImage !== null}
             <button
               onclick={clearBackgroundImage}
               class="btn-ui"
@@ -402,10 +437,10 @@
     {...!isFullscreen ? restProps : {}}
   >
     <!-- Background image -->
-    {#if backgroundImageUrl}
+    {#if displayUrl}
       <img
         bind:this={elmBg}
-        src={backgroundImageUrl}
+        src={displayUrl}
         alt=""
         class="absolute inset-0 w-full h-full object-cover"
         style="z-index: 0;"
@@ -520,7 +555,7 @@
   </div>
 {:else}
   <!-- Normal inline view -->
-  <div class="relative group">
+  <div class="relative">
     <!-- Fullscreen button -->
     <button
       onclick={toggleFullscreen}

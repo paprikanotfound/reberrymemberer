@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { POSTCARD } from "$lib";
+	import { POSTCARD_DETAILS } from "$lib";
 </script>
 
 <div class="w-full min-h-full px-3 pb-3 flex flex-col">
@@ -32,7 +32,7 @@
       <div class="flex flex-col gap-2">
         <div>
           <p class="italic">How much does it cost?</p>
-          <p>{POSTCARD.cost_label}, A6, printed in the Netherlands, worldwide delivery.</p>
+          <p>{POSTCARD_DETAILS.cost_label}, A6, printed in the Netherlands, worldwide delivery.</p>
         </div>
         <hr>
         <div>
@@ -58,7 +58,7 @@
       </div>
       <div class="">
         <p>Sent via priority mail by PostNL – Dutch Postal Services. 
-          (<a href="{POSTCARD.url_delivery_times}" target="_blank" rel="noopener noreferrer">Delivery times</a> →)</p>
+          (<a href="{POSTCARD_DETAILS.url_delivery_times}" target="_blank" rel="noopener noreferrer">Delivery times</a> →)</p>
         <p>
           Once a postcard is handed over to PostNL, delivery is out of our control. We cannot offer refunds or replacements 
           if an address is incorrect, incomplete, or if the postcard is delayed, lost, or returned. Please double-check the 

@@ -6,27 +6,25 @@ export function getDBClient(db: D1Database) {
       id, 
       stripe_checkout_id, 
       recipient_address, 
-      sender_address, 
       send_date, 
       front_image_url, 
       back_image_url, 
       status
-    }: Omit<Order, "stripe_payment_intent"|"provider_order_id"|"reason"|"created_at"|"customer_email">) => {
+    }: Omit<Order, "stripe_payment_intent"|"sender_address"|"provider_order_id"|"reason"|"created_at"|"customer_email">) => {
       return db.prepare(`
         INSERT INTO orders (
           id, 
           stripe_checkout_id, 
           recipient_address, 
-          sender_address, 
           send_date, 
           front_image_url, 
           back_image_url, 
           status, 
           created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_DATE)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_DATE)
         RETURNING *;
       `)
-      .bind(id, stripe_checkout_id, recipient_address, sender_address, send_date, front_image_url, back_image_url, status)
+      .bind(id, stripe_checkout_id, recipient_address, send_date, front_image_url, back_image_url, status)
       .first<Order>();
     },
     setOrderStatusAsPaidOrSkip: ({ orderId, email, paymentIntent }: {

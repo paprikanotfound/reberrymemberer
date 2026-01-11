@@ -31,6 +31,9 @@
 	label {
 		@apply flex flex-row gap-2 max-sm:justify-between text-base  items-center;
 	}
+	.issue {
+		@apply text-red-700 text-sm;
+	}
 	.btn-ui {
 		@apply aspect-square w-10 sm:min-w-8 p-2 flex items-center justify-center rounded-xl backdrop-blur-sm
 			bg-zinc-600/50 hover:bg-zinc-500/40 transition-all text-white

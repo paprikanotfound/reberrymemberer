@@ -40,6 +40,7 @@
 		{
 			"binding": "R2",
 			"bucket_name": "paprika-public",
+			"remote": true,
 		}
 	],
 	/**

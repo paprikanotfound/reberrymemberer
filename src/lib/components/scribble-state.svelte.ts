@@ -1,5 +1,21 @@
 import { PersistedState, StateHistory } from "runed";
-import type { Stroke } from "./canvas/types";
+import type { StrokeOptions } from "perfect-freehand";
+
+export type Point = [number, number, number]; // [x, y, pressure]
+
+export type Stroke = {
+  points: Point[];
+  box: {
+    w: number;
+    h: number;
+  };
+  targetBox: {
+    w: number;
+    h: number;
+  };
+  color: string;
+  options: StrokeOptions;
+}
 
 /**
  * Persisted state for the Scribble component.
@@ -18,7 +34,7 @@ import type { Stroke } from "./canvas/types";
  *   bind:strokes={scribble.content.strokes}
  *   bind:color={scribble.content.color}
  *   bind:size={scribble.content.size}
- *   bind:backgroundImageUrl={scribble.content.backgroundImageUrl}
+ *   bind:backgroundImage={scribble.content.backgroundImage}
  * />
  *
  * <button onclick={() => scribble.undo()}>Undo</button>
@@ -29,17 +45,18 @@ export type ScribbleContent = {
   strokes: Stroke[];
   color: string;
   size: number;
-  backgroundImageUrl: string | null;
+  backgroundImage: string | null; // base64 string
 };
 
 const DEFAULT_CONTENT: ScribbleContent = {
   strokes: [],
   color: '#000000',
   size: 5,
-  backgroundImageUrl: null,
+  backgroundImage: null,
 };
 
 export type PersistedScribble = ReturnType<typeof createPersistedScribble>;
+
 
 export function clearPersistedScribble(key: string) {
   let scribble = new PersistedState<ScribbleContent>(
@@ -70,7 +87,7 @@ export function createPersistedScribble(key: string) {
         strokes: update.strokes ?? state.current.strokes,
         color: update.color ?? state.current.color,
         size: update.size ?? state.current.size,
-        backgroundImageUrl: update.backgroundImageUrl ?? state.current.backgroundImageUrl,
+        backgroundImage: update.backgroundImage ?? state.current.backgroundImage,
       };
     },
     undo() {

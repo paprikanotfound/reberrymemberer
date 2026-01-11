@@ -1,49 +1,13 @@
 import Compressor from "compressorjs";
 
 
-export function preloadImage(src: string, srcset?: string, sizes?: string): Promise<void> {
-  return new Promise(async (resolve, reject) => {
-    // Fetch image
-    const img = new Image();
-    img.fetchPriority = "low"
-    if (srcset) img.srcset = srcset;
-    if (sizes) img.sizes = sizes;
-    img.onload = () => resolve();
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
-export function getLowResPlaceholder(file: File|Blob): Promise<string> {
-  return new Promise((res, rej) => { 
-    const img = new Image();
-    const reader = new FileReader();
-  
-    reader.onload = () => {
-      img.onerror = rej;
-      img.onload = () => {
-        const maxSize = 20;
-        const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
-        const width = Math.floor(img.width * scale);
-        const height = Math.floor(img.height * scale);
-  
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-  
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-  
-        ctx.drawImage(img, 0, 0, width, height);
-        const base64Image = canvas.toDataURL("image/png"); // or "image/jpeg"
-        res(base64Image)
-      };
-      img.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
-  })
-}
-
+/**
+ * Resizes an image to fit within 2000x2000px while maintaining aspect ratio.
+ * Uses compressorjs for high-quality browser-side image processing.
+ *
+ * @param file - The image File or Blob to resize
+ * @returns Promise that resolves to the resized image as a File or Blob
+ */
 export async function resizeImage(file: File|Blob) {
   return new Promise<File|Blob>((res, rej) => {
     new Compressor(file, {
@@ -60,9 +24,16 @@ export async function resizeImage(file: File|Blob) {
         rej(err)
       },
     });
-  }) 
+  })
 }
 
+/**
+ * Loads an image from a File or Blob and returns an HTMLImageElement.
+ * Automatically cleans up the object URL after loading.
+ *
+ * @param image - The image File or Blob to load
+ * @returns Promise that resolves to an HTMLImageElement with the loaded image
+ */
 export async function loadImage(image: File|Blob) {
   return new Promise<HTMLImageElement>((res, rej) => {
     const url = URL.createObjectURL(image);
@@ -78,15 +49,4 @@ export async function loadImage(image: File|Blob) {
     };
     elm.src = url;
   })
-}
-
-export function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
