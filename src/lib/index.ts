@@ -8,3 +8,8 @@ export const POSTCARD_DETAILS = {
   size: { w: 1819, h: 1311 },
   url_delivery_times: "https://www.postnl.nl/api/assets/blt43aa441bfc1e29f2/blt6d6203f1afe9f9aa/68199ff00c47c367afd62823/20250501-brochure-international-delivery-times.pdf",
 }
+
+export const ROUTES = {
+  send: '/write',
+  return: '/return',
+}
