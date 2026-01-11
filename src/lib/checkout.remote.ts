@@ -2,8 +2,9 @@ import { form, getRequestEvent } from "$app/server"
 import { error, redirect } from "@sveltejs/kit";
 import { Stripe } from "stripe"
 import { getDBClient } from "$lib/server/db";
-import { POSTCARD_DETAILS } from "$lib";
+import { POSTCARD_DETAILS, ROUTES } from "$lib";
 import { AddressDetailsSchema } from "./checkout.types";
+import { isErrorRetryableD1, tryWhile } from "./utils/retry";
 
 
 async function createStripeCheckoutSession(secret: string, origin: string, client_reference_id: string, expires_in: number) {
@@ -17,6 +18,7 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
           currency: 'eur',
           product_data: {
             name: 'Postcard',
+            description: 'Postal service. A6 postcard.'
           },
           unit_amount: POSTCARD_DETAILS.cost_unit,
         },
@@ -24,8 +26,8 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
       },
     ],
     mode: 'payment',
-    success_url: new URL('/return', origin).href,
-    cancel_url: new URL('/write', origin).href,
+    success_url: new URL(ROUTES.return, origin).href,
+    cancel_url: new URL(ROUTES.send, origin).href,
   });
   return session
 }
@@ -54,15 +56,18 @@ export const createCheckout = form(AddressDetailsSchema, async (request) => {
 
   // Create new order
   const db = getDBClient(platform!.env.DB);
-  const resp = await db.createNewOrder({
-    id: clientRefId,
-    stripe_checkout_id: session.id,
-    recipient_address: JSON.stringify(request),
-    send_date: request.sendDate,
-    front_image_url: keyFront,
-    back_image_url: keyBack,
-    status: 'draft',
-  });
+  const resp = await tryWhile(
+    () => db.createNewOrder({
+      id: clientRefId,
+      stripe_checkout_id: session.id,
+      recipient_address: JSON.stringify(request),
+      send_date: request.sendDate,
+      front_image_url: keyFront,
+      back_image_url: keyBack,
+      status: 'draft',
+    }),
+    isErrorRetryableD1,
+  );
 
   if (!resp) error(404, 'Failed to create order');
 
