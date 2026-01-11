@@ -6,6 +6,7 @@
   import countries from '$lib/countries.json';
 	import { drawObjectCover, drawStokes } from "$lib/utils/canvas";
 	import { base64ToBlob } from "$lib/utils/files";
+	import { initForm } from "$lib/utils/forms.svelte";
 	import { loadImage } from "$lib/utils/images";
   import { onMount, tick, untrack } from 'svelte';
 
@@ -15,22 +16,23 @@
   const scribbleFront = createPersistedScribble('postcard-front');
   const scribbleBack = createPersistedScribble('postcard-back');
 
-  onMount(() => {
-    // Set initial date value
-    createCheckout.fields.sendDate.set(new Date().toISOString().split('T')[0]);
+  // Set initial Send Date value
+  const today = new Date();
+  initForm(createCheckout, () => {
+    return {
+      sendDate: today.toISOString().split('T')[0],
+    }
   });
+  // Force selected date to be today or later
   $effect(() => {
     const selected = createCheckout.fields.sendDate.value();
-    // Force selected date to be present or future
     untrack(async () => {
-      const today = new Date()
-      const str = today.toISOString().split('T')[0];
       const a = new Date(selected);
-      if (a < today) createCheckout.fields.sendDate.set(str);
+      if (a < today) createCheckout.fields.sendDate.set(today.toISOString().split('T')[0]);
     });
   });
   
-  async function exportImage(content: ScribbleContent, type?: string, quality?: number) {
+  async function createPageImage(content: ScribbleContent, type?: string, quality?: number) {
     return new Promise<Blob>(async (res, rej) => {
       const canvas = document.createElement("canvas");
       canvas.width = POSTCARD_DETAILS.size.w;
@@ -61,15 +63,15 @@
     })
   }
 
-  async function injectImageAndSubmit(e: MouseEvent & { currentTarget: EventTarget & HTMLButtonElement; }) {
+  async function injectImgFieldsAndSubmit(e: MouseEvent & { currentTarget: EventTarget & HTMLButtonElement; }) {
     e.preventDefault();
     const form = e.currentTarget.form;
     
-    const frontBlob = await exportImage(scribbleFront.content, 'image/jpeg', 0.95);
+    const frontBlob = await createPageImage(scribbleFront.content, 'image/jpeg', 0.95);
     const file = new File([frontBlob], 'postcard.png', { type: 'image/png' });
     createCheckout.fields.frontImage.set(file);
 
-    const backBlob = await exportImage(scribbleBack.content, 'image/jpeg', 0.95);
+    const backBlob = await createPageImage(scribbleBack.content, 'image/jpeg', 0.95);
     const fileBack = new File([backBlob], 'postcard.png', { type: 'image/png' });
     createCheckout.fields.backImage.set(fileBack);
 
@@ -182,7 +184,7 @@
       <label>
         Send Date: <input {...createCheckout.fields.sendDate.as('date')} />
       </label>
-
+      
       <div id="address" class="flex flex-col gap-2">
         <label>
           Name: <input {...createCheckout.fields.name.as('text')} required />
@@ -211,7 +213,7 @@
       </div>
 
       <div id="action+issues">
-        <button class="form flex gap-1" onclick={injectImageAndSubmit}>
+        <button class="form flex gap-1" onclick={injectImgFieldsAndSubmit}>
           {#if !!createCheckout.pending}
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin lucide lucide-loader-icon lucide-loader"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>
           {/if}
