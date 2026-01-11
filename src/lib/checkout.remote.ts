@@ -2,9 +2,15 @@ import { form, getRequestEvent } from "$app/server"
 import { error, redirect } from "@sveltejs/kit";
 import { Stripe } from "stripe"
 import { getDBClient } from "$lib/server/db";
-import { BUCKET_PATHS, POSTCARD_DETAILS, ROUTES } from "$lib";
+import { POSTCARD_DETAILS, ROUTES } from "$lib";
 import { AddressDetailsSchema } from "./checkout.types";
 import { isErrorRetryableD1, isErrorRetryableR2, tryWhile } from "./utils/retry";
+
+// Constants
+const BUCKET_PATHS = {
+  // Delete objects after 30 day(s): "tmp/30/*" 
+  uploadCheckoutAssetPath: (filename: string, isDevEnv: boolean) => `tmp/30/reberrymemberer/${isDevEnv ?"dev":"prod"}/${filename}`,
+}
 
 
 async function createStripeCheckoutSession(secret: string, origin: string, client_reference_id: string, expires_in: number) {

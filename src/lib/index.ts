@@ -13,9 +13,3 @@ export const ROUTES = {
   send: '/write',
   return: '/return',
 }
-
-export const BUCKET_PATHS = {
-  // Delete objects after 30 day(s): "tmp/30/*" 
-  uploadCheckoutAssetPath: (filename: string, isDevEnv: boolean) => `tmp/30/reberrymemberer/${isDevEnv ?"dev":"prod"}/${filename}`,
-}
-
