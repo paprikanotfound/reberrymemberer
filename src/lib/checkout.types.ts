@@ -10,7 +10,8 @@ const SendDateSchema = z
     return dateStr >= today;
   }, {
     message: "Send date must be today or in the future",
-  });
+  })
+  .optional(); // Note: not supported yet.
 
 // Single schema with conditional validation using superRefine
 export const CheckoutSchema = z.object({

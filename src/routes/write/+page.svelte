@@ -126,12 +126,15 @@
 }}>(download)</button> -->
 
 <div class="flex flex-col items-start justify-center gap-8 sm:gap-12 p-3">
-  <a href="/">(back)</a>
+  <div class="grid grid-cols-3 w-full">
+    <a href="/">(back)</a>
+    <div class="col-start-2 flex justify-center">{`{Send Postcard}`}</div>
+  </div>
 
   <div id="font-page" class="w-full flex flex-col gap-3 md:grid md:grid-cols-2">
     <div class="flex gap-4">
       <span>001</span>
-      <span>Front</span>
+      <span>Front Page</span>
     </div>
     <div class="w-full" style="aspect-ratio: {POSTCARD_DETAILS.size.w/POSTCARD_DETAILS.size.h};">
       <Scribble
@@ -155,7 +158,7 @@
   <div id="back-page" class="w-full flex flex-col gap-3  md:grid md:grid-cols-2">
     <div class="flex gap-4">
       <span>002</span>
-      <span>Back</span>
+      <span>Back Page</span>
     </div>
     <div class="w-full" style="aspect-ratio: {POSTCARD_DETAILS.size.w/POSTCARD_DETAILS.size.h};">
       <Scribble
@@ -185,9 +188,9 @@
       <input hidden {...createCheckout.fields.frontImage.as('file')} />
       <input hidden {...createCheckout.fields.backImage.as('file')} />
 
-      <label>
+      <!-- <label>
         Send Date: <input {...createCheckout.fields.sendDate.as('date')} />
-      </label>
+      </label> -->
       
       <div id="address" class="flex flex-col gap-2">
         <label>
