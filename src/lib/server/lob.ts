@@ -7,7 +7,22 @@ const API_URL_US_VER = 'https://api.lob.com/v1/us_verifications';
 
 export function initPostalClient({ apiKey }: { apiKey: string }) {
   return {
-    verifyUSAddress: (payload: AddressLob) => {
+    testAddresses: {
+      intl: {
+        deliverable: "deliverable",
+        deliverable_missing_info: "deliverable missing info",
+        undeliverable: "undeliverable",
+        no_match: "no match",
+      },
+      us: {
+        deliverable: "deliverable",
+        deliverable_missing_unit: "missing unit",
+        deliverable_incorrect_unit: "incorrect unit",
+        deliverable_unnecessary_unit: "unnecessary unit",
+        undeliverable: "undeliverable block match",
+      }
+    },
+    verifyUSAddress: async (payload: LobAddress) => {
       const body = new URLSearchParams({
         recipient: payload.name,
         primary_line: payload.address_line1,
@@ -16,7 +31,7 @@ export function initPostalClient({ apiKey }: { apiKey: string }) {
         state: payload.address_state!,
         postal_code: payload.address_zip,
       });
-      return fetch(API_URL_US_VER, {
+      const response = await fetch(API_URL_US_VER, {
         method: "POST",
         headers: {
           "Authorization": `Basic ${Buffer.from(`${apiKey}:`).toString("base64")}`,
@@ -24,8 +39,15 @@ export function initPostalClient({ apiKey }: { apiKey: string }) {
         },
         body,
       });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`US address verification failed: ${response.status} ${response.statusText} - ${errorBody}`);
+      }
+
+      return await response.json() as USVerificationResponse;
     },
-    verifyInternationalAddress: (payload: AddressLob) => {
+    verifyInternationalAddress: async (payload: LobAddress) => {
       const body = new URLSearchParams({
         recipient: payload.name,
         primary_line: payload.address_line1,
@@ -35,7 +57,7 @@ export function initPostalClient({ apiKey }: { apiKey: string }) {
         postal_code: payload.address_zip,
         country: payload.address_country,
       });
-      return fetch(API_URL_INTL_VER, {
+      const response = await fetch(API_URL_INTL_VER, {
         method: "POST",
         headers: {
           "Authorization": `Basic ${Buffer.from(`${apiKey}:`).toString("base64")}`,
@@ -43,6 +65,13 @@ export function initPostalClient({ apiKey }: { apiKey: string }) {
         },
         body,
       });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`International address verification failed: ${response.status} ${response.statusText} - ${errorBody}`);
+      }
+
+      return await response.json() as IntlVerificationResponse;
     },
     createNewOrder:(payload: PostcardPayload) => {
       return fetch(API_URL_POSTCARDS, {
@@ -57,7 +86,11 @@ export function initPostalClient({ apiKey }: { apiKey: string }) {
   }
 }
 
+
 // --- Types ---
+
+export type PostalClient = ReturnType<typeof initPostalClient>;
+
 
 // Base address fields
 type BaseAddress = {
@@ -69,6 +102,7 @@ type BaseAddress = {
   phone?: string;
   description?: string;
 };
+
 // US Address (domestic)
 type USAddress = BaseAddress & {
   address_city: string;
@@ -76,6 +110,7 @@ type USAddress = BaseAddress & {
   address_zip: string;
   address_country: 'US';
 };
+
 // International Address
 type IntlAddress = BaseAddress & {
   address_city?: string;
@@ -84,8 +119,7 @@ type IntlAddress = BaseAddress & {
   address_country: string; // 2-letter country code (ISO 3166), excluding US territories
 };
 
-export type AddressLob = USAddress | IntlAddress;
-
+export type LobAddress = USAddress | IntlAddress;
 
 type MergeVariables = {
   [key: string]: string; // Allows any key-value pair where both are strings
@@ -107,8 +141,8 @@ type QrCode = {
 };
 
 export type PostcardPayload = {
-  to: AddressLob;
-  from?: AddressLob | string;
+  to: LobAddress;
+  from?: LobAddress | string;
   front: string;
   back: string;
   size: "4x6" | "6x9" | "6x11";
@@ -127,7 +161,7 @@ export type PostcardResponse = {
   id: string;
   description: string | null;
   metadata: Record<string, unknown>; // Flexible metadata object
-  to: AddressLob;
+  to: LobAddress;
   url: string;
   carrier: string;
   front_template_id: string | null;
@@ -139,4 +173,100 @@ export type PostcardResponse = {
   fsc: boolean;
   sla: string; // Assuming SLA is represented as a string
   object: 'postcard';
+};
+
+
+// --- US verification --- 
+
+type AddressComponents = {
+  primary_number: string;
+  street_predirection: string;
+  street_name: string;
+  street_suffix: string;
+  street_postdirection: string;
+  secondary_designator: string;
+  secondary_number: string;
+  pmb_designator: string;
+  pmb_number: string;
+  extra_secondary_designator: string;
+  extra_secondary_number: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  zip_code_plus_4: string;
+  zip_code_type: string;
+  delivery_point_barcode: string;
+  address_type: string;
+  record_type: string;
+  default_building_address: boolean;
+  county: string;
+  county_fips: string;
+  carrier_route: string;
+  carrier_route_type: string;
+  po_box_only_flag: string;
+  latitude: number;
+  longitude: number;
+};
+
+type DeliverabilityAnalysis = {
+  dpv_confirmation: string;
+  dpv_cmra: string;
+  dpv_vacant: string;
+  dpv_active: string;
+  dpv_inactive_reason: string;
+  dpv_throwback: string;
+  dpv_non_delivery_day_flag: string;
+  dpv_non_delivery_day_values: string;
+  dpv_no_secure_location: string;
+  dpv_door_not_accessible: string;
+  dpv_footnotes: string[];
+  ews_match: boolean;
+  lacs_indicator: string;
+  lacs_return_code: string;
+  suite_return_code: string;
+};
+
+type LobConfidenceScore = {
+  score: number;
+  level: string;
+};
+
+type USVerificationResponse = {
+  id: string;
+  recipient: string;
+  primary_line: string;
+  secondary_line: string;
+  urbanization: string;
+  last_line: string;
+  deliverability: "deliverable" | "deliverable_unnecessary_unit" | "deliverable_incorrect_unit" | "deliverable_missing_unit" | "undeliverable";
+  valid_address: boolean;
+  components: AddressComponents;
+  deliverability_analysis: DeliverabilityAnalysis;
+  lob_confidence_score: LobConfidenceScore;
+  object: 'us_verification';
+};
+
+
+// --- Intl verification --- 
+
+type IntlVerificationComponents = {
+  primary_number: string;
+  street_name: string;
+  city: string;
+  state: string;
+  postal_code: string;
+};
+
+type IntlVerificationResponse = {
+  id: string;
+  recipient: string | null;
+  primary_line: string;
+  secondary_line: string;
+  last_line: string;
+  country: string;
+  coverage: "SUBBUILDING" | "HOUSENUMBER/BUILDING" | "STREET" | "LOCALITY" | "SPARSE";
+  deliverability: "deliverable" | "deliverable_missing_info" | "undeliverable" | "no_match";
+  status: string;
+  components: IntlVerificationComponents;
+  object: 'intl_verification';
 };

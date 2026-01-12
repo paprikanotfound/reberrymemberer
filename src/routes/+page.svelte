@@ -5,7 +5,7 @@
 <div class="w-full min-h-full px-3 pb-3 flex flex-col">
   <section class="relative h-[100dvh] flex flex-col justify-center items-center">
     <img 
-      class="select-none object-cover h-44 sm:h-80 sm:-translate-x-8 postcard-shadow" 
+      class="select-none object-cover h-44 sm:h-96 sm:-translate-x-10 postcard-shadow" 
       loading="eager"
       src="./examples/front1.jpg" alt="" 
     />
@@ -15,7 +15,7 @@
       <span class="max-sm:hidden inline-block"><a href="/write">Send</a>, <a href="/receive">Receive</a>.</span>
     </span>
     <img 
-      class="select-none object-cover h-44 sm:h-80 sm:translate-x-8 postcard-shadow" 
+      class="select-none object-cover h-44 sm:h-96 sm:translate-x-10 postcard-shadow" 
       loading="eager"
       src="./examples/back3.jpg" alt="" 
     />

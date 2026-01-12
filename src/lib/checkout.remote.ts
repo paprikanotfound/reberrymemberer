@@ -1,11 +1,11 @@
 import { form, getRequestEvent } from "$app/server"
-import { error, redirect } from "@sveltejs/kit";
+import { error, invalid, redirect } from "@sveltejs/kit";
 import { Stripe } from "stripe"
 import { initDB } from "$lib/server/db";
 import { POSTCARD_DETAILS, ROUTES } from "$lib";
 import { CheckoutSchema } from "./checkout.types";
 import { isErrorRetryableD1, isErrorRetryableR2, tryWhile } from "./utils/retry";
-import { initPostalClient, type AddressLob } from "./server/lob";
+import { initPostalClient, type LobAddress, type PostalClient } from "./server/lob";
 
 // Constants
 const BUCKET_PATHS = {
@@ -39,7 +39,84 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
   return session
 }
 
-export const createCheckout = form(CheckoutSchema, async (request) => {
+async function mockVerifyAddress(postal: PostalClient, addressTo: LobAddress) {
+  const isUS = addressTo.address_country === "US";
+
+  // Use test addresses to trigger specific API responses
+  // The primary_line field is used to determine the test response
+  const testAddress: LobAddress = {
+    ...addressTo,
+    // Use the test address value as primary_line to trigger specific response
+    // Available test values from postal.testAddresses
+    address_line1: isUS ? 
+      postal.testAddresses.us.deliverable : 
+      postal.testAddresses.intl.undeliverable,
+  };
+
+  console.log(`[DEV MODE] Testing address verification with: ${testAddress.address_line1}`);
+
+  try {
+    if (isUS) {
+      const verificationResult = await postal.verifyUSAddress(testAddress);
+      console.log("[DEV MODE] US address verification result:", verificationResult);
+
+      // Check deliverability
+      if (verificationResult.deliverability === "undeliverable") {
+        console.error("Undeliverable US address:", verificationResult);
+        error(422, 'Address could not be verified as deliverable. Please check your address details.');
+      }
+
+      console.log("US address verified:", verificationResult.deliverability);
+    } else {
+      const verificationResult = await postal.verifyInternationalAddress(testAddress);
+      console.log("[DEV MODE] International address verification result:", verificationResult);
+
+      // Check deliverability
+      if (verificationResult.deliverability === "undeliverable" || verificationResult.deliverability === "no_match") {
+        console.error("Undeliverable international address:", verificationResult);
+        error(422, 'Address could not be verified as deliverable. Please check your address details.');
+      }
+
+      console.log("International address verified:", verificationResult.deliverability);
+    }
+  } catch (err) {
+    console.error("[DEV MODE] Address verification error:", err);
+    error(422, 'Address verification failed. Please ensure all fields are correct.');
+  }
+}
+
+async function verifyAddress(postal: PostalClient, addressTo: LobAddress) {
+  try {
+    const isUS = addressTo.address_country === "US";
+    if (isUS) {
+      const verificationResult = await postal.verifyUSAddress(addressTo);
+
+      // Check deliverability
+      if (verificationResult.deliverability === "undeliverable") {
+        console.error("Undeliverable US address:", verificationResult);
+        error(422, 'Address could not be verified as deliverable. Please check your address details.');
+      }
+
+      console.log("US address verified:", verificationResult.deliverability);
+    } else {
+      const verificationResult = await postal.verifyInternationalAddress(addressTo);
+
+      // Check deliverability
+      if (verificationResult.deliverability === "undeliverable" || verificationResult.deliverability === "no_match") {
+        console.error("Undeliverable international address:", verificationResult);
+        error(422, 'Address could not be verified as deliverable. Please check your address details.');
+      }
+
+      console.log("International address verified:", verificationResult.deliverability);
+    }
+  } catch (err) {
+    console.error("Address verification error:", err);
+    error(422, 'Address verification failed. Please ensure all fields are correct.');
+  }
+}
+
+
+export const createCheckout = form(CheckoutSchema, async (request, issue) => {
   const { platform, url } = getRequestEvent();
   const devEnv = platform!.env.ENV == "development";
   const clientRefId = crypto.randomUUID();
@@ -52,20 +129,26 @@ export const createCheckout = form(CheckoutSchema, async (request) => {
     address_state: request.state,
     address_zip: request.postalCode,
     address_country: request.country,
-  } satisfies AddressLob;
+  } satisfies LobAddress;
 
   // Address verification: Requires a live key.
-  const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
-  const isUS = addressTo.address_country === "US";
-  const respAdd = isUS
-    ? await lob.verifyUSAddress(addressTo)
-    : await lob.verifyInternationalAddress(addressTo);
-
-  if (!respAdd.ok) {
-    console.error(respAdd);
-    error(422, 'Address could not be verified! Please ensure all fields are correct.');
+  try {
+    const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
+    if (devEnv) {
+      await mockVerifyAddress(lob, addressTo);
+    } else {
+      await verifyAddress(lob, addressTo);
+    }
+  } catch (err) {
+    // Type-safely extract the error message
+    const message = err && typeof err === 'object' && 'body' in err && typeof err.body === 'object' && err.body && 'message' in err.body
+      ? String(err.body.message)
+      : err instanceof Error
+      ? err.message
+      : String(err);
+    invalid(message);
   }
-
+  
   // Create a Stripe session
   const session = await createStripeCheckoutSession(
     platform!.env.STRIPE_API_SECRET,
@@ -73,7 +156,7 @@ export const createCheckout = form(CheckoutSchema, async (request) => {
     clientRefId,
     60 * 60 * 1,
   );
-  if (!session.url) error(404, 'No checkout url')
+  if (!session.url) error(500, 'Unable to create checkout session. Please try again.')
 
   // Upload postcard page images
   const keyFront = BUCKET_PATHS.uploadCheckoutAssetPath(`${clientRefId}_front.jpg`, devEnv);
@@ -103,7 +186,7 @@ export const createCheckout = form(CheckoutSchema, async (request) => {
     isErrorRetryableD1,
   );
 
-  if (!resp) error(404, 'Failed to create order');
+  if (!resp) error(500, 'Unable to process your order. Please try again.');
 
   redirect(301, session.url);
 });

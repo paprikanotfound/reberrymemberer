@@ -1,7 +1,7 @@
 import { initDB } from "$lib/server/db";
 import { error, json } from "@sveltejs/kit";
 import Stripe from "stripe"
-import { initPostalClient, type AddressLob, type PostcardPayload, type PostcardResponse } from "$lib/server/lob.js";
+import { initPostalClient, type LobAddress, type PostcardPayload, type PostcardResponse } from "$lib/server/lob.js";
 import { isErrorRetryableD1, tryWhile } from "$lib/utils/retry.js";
 import { initLucia } from "$lib/server/lucia.js";
 
@@ -34,7 +34,7 @@ async function fulfillOrder(
   try {
 
     // Create new postcard order
-    const recipientAddress: AddressLob = JSON.parse(order.recipient_address);
+    const recipientAddress: LobAddress = JSON.parse(order.recipient_address);
     const payload: PostcardPayload = {
       from: 'adr_d07414d6c6ff34b7', // Using Lob's address
       to: recipientAddress,
