@@ -32,7 +32,7 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
         quantity: 1,
       },
     ],
-    customer_email: 'test+location_KR@example.com',
+    // customer_email: 'test+location_KR@example.com',
     mode: 'payment',
     success_url: new URL(ROUTES.return, origin).href,
     cancel_url: new URL(ROUTES.send, origin).href,
