@@ -133,22 +133,22 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
   } satisfies LobAddress;
 
   // Address verification: Requires a live key.
-  // try {
-  //   const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
-  //   if (devEnv) {
-  //     await mockVerifyAddress(lob, addressTo);
-  //   } else {
-  //     await verifyAddress(lob, addressTo);
-  //   }
-  // } catch (err) {
-  //   // Type-safely extract the error message
-  //   const message = err && typeof err === 'object' && 'body' in err && typeof err.body === 'object' && err.body && 'message' in err.body
-  //     ? String(err.body.message)
-  //     : err instanceof Error
-  //     ? err.message
-  //     : String(err);
-  //   invalid(message);
-  // }
+  try {
+    const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
+    if (devEnv) {
+      await mockVerifyAddress(lob, addressTo);
+    } else {
+      await verifyAddress(lob, addressTo);
+    }
+  } catch (err) {
+    // Type-safely extract the error message
+    const message = err && typeof err === 'object' && 'body' in err && typeof err.body === 'object' && err.body && 'message' in err.body
+      ? String(err.body.message)
+      : err instanceof Error
+      ? err.message
+      : String(err);
+    invalid(message);
+  }
   
   // Create a Stripe session
   const session = await createStripeCheckoutSession(
