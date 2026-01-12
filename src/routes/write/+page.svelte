@@ -128,7 +128,6 @@
 <div class="flex flex-col items-start justify-center gap-8 sm:gap-12 p-3">
   <div class="grid grid-cols-3 w-full">
     <a href="/">(back)</a>
-    <div class="col-start-2 flex justify-center">{`{Send Postcard}`}</div>
   </div>
 
   <div id="font-page" class="w-full flex flex-col gap-3 md:grid md:grid-cols-2">

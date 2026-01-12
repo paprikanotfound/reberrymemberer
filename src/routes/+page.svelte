@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { POSTCARD_DETAILS } from "$lib";
+  const SUPPORT_EMAIL = "reberrymemberer@paprika.fyi"
 </script>
 
 <div class="w-full min-h-full px-3 pb-3 flex flex-col">
@@ -29,25 +30,26 @@
       <div class="flex gap-12 mb-3">
         <span>FAQ</span>
       </div>
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-4">
         <div>
           <p class="italic">How much does it cost?</p>
-          <p>{POSTCARD_DETAILS.cost_label}, A6, printed in the Netherlands, worldwide delivery.</p>
+          <p>{POSTCARD_DETAILS.cost_label}</p>
+          <p class="text-sm"><i>Prices are shown in your local currency at checkout.</i></p>
+        </div>
+        <hr>
+        <div>
+          <p class="italic">What size is it in?</p>
+          <p>4 × 6 inches (10.16 × 15.24 cm).</p>
         </div>
         <hr>
         <div>
           <p class="italic">How long does it take to arrive?</p>
-          <p>.</p>
-        </div>
-        <hr>
-        <div>
-          <p class="italic">Why did you create this?</p>
-          <p>.</p>
+          <p>Delivery typically takes 2–5 business days within the U.S., and 1–2 weeks internationally.</p>
         </div>
         <hr>
         <div>
           <p class="italic">What does reberrymemberer mean?</p>
-          <p>It's the title of a song by Drop Nineteens. I liked the word and thought it would be a good fit for this project.</p>
+          <p>It's the title of a <a href="https://www.youtube.com/watch?v=WMFBLQSW8sE" target="_blank">song</a> by Drop Nineteens. I liked the word and thought it would be a good fit for this website.</p>
         </div>
         <hr>
       </div>
@@ -56,24 +58,42 @@
       <div class="flex gap-8 mb-3">
         <span>Shipping & Returns</span>
       </div>
+      <!-- 
       <div class="">
-        <p>Sent via priority mail by PostNL – Dutch Postal Services. 
-          (<a href="{POSTCARD_DETAILS.url_delivery_times}" target="_blank" rel="noopener noreferrer">Delivery times</a> →)</p>
         <p>
-          Once a postcard is handed over to PostNL, delivery is out of our control. We cannot offer refunds or replacements 
-          if an address is incorrect, incomplete, or if the postcard is delayed, lost, or returned. Please double-check the 
-          address before sending.
+          Postcards are printed in A6 format (10.5 × 14.8 cm / 4.1 × 5.8 inches) in the Netherlands.
+          Worldwide delivery via priority mail with PostNL – Dutch Postal Services.
+          (<a href="https://www.postnl.nl/api/assets/blt43aa441bfc1e29f2/blt6d6203f1afe9f9aa/68199ff00c47c367afd62823/20250501-brochure-international-delivery-times.pdf" target="_blank">Delivery times</a> →)
+        </p>
+        <br/>
+        <p>
+          Once a postcard is handed over to PostNL, delivery is outside our control. We cannot offer refunds or replacements
+          for incorrect or incomplete addresses, or for postcards that are delayed, lost, or returned. Please double-check
+          the address before sending.
+        </p>
+      </div> -->
+      <div>
+        <p class="mb-4">
+          Postcards ship worldwide via USPS First-Class Mail.
+        </p>
+        <p class="mb-4">
+          Once an order has been placed, it cannot be cancelled or refunded.
+          Postcards are printed and sent shortly after submission.
+          Please review the delivery address carefully before sending.
+        </p>
+        <p class="">
+          If your address is incorrect, please immediately email <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a>.
         </p>
       </div>
     </div>
     <div class="flex flex-col lg:grid lg:grid-cols-2">
       <div class="flex gap-8 mb-3">
-        <span>Contact</span>
+        <span>©</span>
       </div>
       <div class="">
-        <p>Please send any questions to <a href="mailto:reberrymemberer@paprika.fyi">reberrymemberer@paprika.fyi</a>.</p>
-        <p>Postcard photography: <a href="https://instagram.com/hoyeonwang" target="_blank">Hoyeon Wang</a>.</p>
-        <p class="mt-4">© <a href="https://paprika.fyi" target="_blank">Paprika</a> {`{getCurrentYear()}`}</p>
+        <!-- <p>Please send any questions to <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a>.</p> -->
+        <p>Photography: <a href="https://instagram.com/hoyeonwang" target="_blank">Hoyeon Wang</a>.</p>
+        <p class="mb-4"><a href="https://paprika.fyi" target="_blank">Paprika</a> © All rights reserved.</p>
       </div>
     </div>
   </section>
