@@ -1,10 +1,11 @@
 import { form, getRequestEvent } from "$app/server"
 import { error, redirect } from "@sveltejs/kit";
 import { Stripe } from "stripe"
-import { initDB, type BaseAddress } from "$lib/server/db";
+import { initDB } from "$lib/server/db";
 import { POSTCARD_DETAILS, ROUTES } from "$lib";
 import { CheckoutSchema } from "./checkout.types";
 import { isErrorRetryableD1, isErrorRetryableR2, tryWhile } from "./utils/retry";
+import { initPostalClient, type AddressLob } from "./server/lob";
 
 // Constants
 const BUCKET_PATHS = {
@@ -43,6 +44,28 @@ export const createCheckout = form(CheckoutSchema, async (request) => {
   const devEnv = platform!.env.ENV == "development";
   const clientRefId = crypto.randomUUID();
 
+  const addressTo = {
+    name: request.name,
+    address_line1: request.address,
+    address_line2: request.addressLine2,
+    address_city: request.city,
+    address_state: request.state,
+    address_zip: request.postalCode,
+    address_country: request.country,
+  } satisfies AddressLob;
+
+  // Address verification: Requires a live key.
+  const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
+  const isUS = addressTo.address_country === "US";
+  const respAdd = isUS
+    ? await lob.verifyUSAddress(addressTo)
+    : await lob.verifyInternationalAddress(addressTo);
+
+  if (!respAdd.ok) {
+    console.error(respAdd);
+    error(422, 'Address could not be verified! Please ensure all fields are correct.');
+  }
+
   // Create a Stripe session
   const session = await createStripeCheckoutSession(
     platform!.env.STRIPE_API_SECRET,
@@ -71,15 +94,7 @@ export const createCheckout = form(CheckoutSchema, async (request) => {
     () => db.order.createOrder({
       id: clientRefId,
       stripe_checkout_id: session.id,
-      recipient_address: JSON.stringify({
-        name: request.name,
-        address_line1: request.address,
-        address_line2: request.addressLine2,
-        address_city: request.city,
-        address_state: request.state,
-        address_zip: request.postalCode,
-        address_country: request.country,
-      } satisfies BaseAddress),
+      recipient_address: JSON.stringify(addressTo),
       send_date: request.sendDate,
       front_image_url: keyFront,
       back_image_url: keyBack,

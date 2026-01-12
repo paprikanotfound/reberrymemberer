@@ -21,7 +21,7 @@
   initForm(createCheckout, () => {
     return {
       sendDate: today.toISOString().split('T')[0],
-      // country: 'US', // Default to US
+      country: 'KR', // Default to US
     }
   });
   // Force selected date to be today or later

@@ -97,16 +97,6 @@ export function initDB(db: D1Database) {
 
 // --- Types ---
 
-export type BaseAddress = {
-  name: string;
-  address_line1: string;
-  address_line2?: string;
-  address_city?: string;
-  address_state?: string;
-  address_zip: string;
-  address_country: string;
-};
-
 export type DBClient = ReturnType<typeof initDB>;
 
 export type Order = {

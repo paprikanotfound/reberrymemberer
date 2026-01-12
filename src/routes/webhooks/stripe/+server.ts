@@ -1,7 +1,7 @@
-import { initDB, type BaseAddress } from "$lib/server/db";
+import { initDB } from "$lib/server/db";
 import { error, json } from "@sveltejs/kit";
 import Stripe from "stripe"
-import { initPostalProvider, type PostcardPayload, type PostcardResponse } from "$lib/server/lob.js";
+import { initPostalClient, type AddressLob, type PostcardPayload, type PostcardResponse } from "$lib/server/lob.js";
 import { isErrorRetryableD1, tryWhile } from "$lib/utils/retry.js";
 import { initLucia } from "$lib/server/lucia.js";
 
@@ -32,27 +32,30 @@ async function fulfillOrder(
   }
 
   try {
+
     // Create new postcard order
-    const recipientAddress: BaseAddress = JSON.parse(order.recipient_address);
+    const recipientAddress: AddressLob = JSON.parse(order.recipient_address);
     const payload: PostcardPayload = {
-      description: `Postcard for order ${order.id}`,
-      send_date: order.send_date ?? undefined,
+      from: 'adr_d07414d6c6ff34b7', // Using Lob's address
       to: recipientAddress,
-      from: 'adr_d07414d6c6ff34b7', // default Lob address
       front: `${platform!.env.R2_DELIVER_URL}/${order.front_image_url}`,
       back: `${platform!.env.R2_DELIVER_URL}/${order.back_image_url}`,
+      metadata: {
+        order_id: order.id,
+      },
       size: "4x6",
       mail_type: 'usps_first_class',
       use_type: 'operational',
-      fsc: false,
-      print_speed: 'core',
+      // send_date: order.send_date ?? undefined, // Unsupported for now
     }
-    const lob = initPostalProvider({ apiKey: platform!.env.LOB_API_SECRET });
+    const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
 
     const resp = await lob.createNewOrder(payload);
     if (!resp.ok) {
-      throw new Error(`Error creating postcard order! Status: ${resp}`);
+      console.error(resp)
+      throw new Error(`Invalid postcard response!`);
     }
+
     const respContent: PostcardResponse = await resp.json()
 
     // Update client order status & id
@@ -81,7 +84,6 @@ async function fulfillOrder(
       isErrorRetryableD1
     );
   }
-
 }
 
 const stripeWebhookHandler = (stripe: Stripe, platform: Readonly<App.Platform>) => ({

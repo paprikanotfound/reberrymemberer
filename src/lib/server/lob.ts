@@ -1,82 +1,74 @@
 
 // Constants
 const API_URL_POSTCARDS = 'https://api.lob.com/v1/postcards';
+const API_URL_INTL_VER = 'https://api.lob.com/v1/intl_verifications';
+const API_URL_US_VER = 'https://api.lob.com/v1/us_verifications';
 
-export function initPostalProvider({ apiKey }: { apiKey: string }) {
+
+export function initPostalClient({ apiKey }: { apiKey: string }) {
   return {
-    createNewOrder: async (payload: PostcardPayload) => {
-
-      // TODO: address verification
-
-      const formData = new URLSearchParams();
-      formData.append('description', payload.description);
-
-      // Handle name (can be null)
-      if (payload.to.name) {
-        formData.append('to[name]', payload.to.name);
-      }
-
-      formData.append('to[address_line1]', payload.to.address_line1);
-
-      if (payload.to.address_line2) {
-        formData.append('to[address_line2]', payload.to.address_line2);
-      }
-
-      // Handle address fields based on type (US vs International)
-      if (payload.to.address_country === 'US') {
-        // US Address - all fields required
-        const usAddress = payload.to as USAddress;
-        formData.append('to[address_city]', usAddress.address_city);
-        formData.append('to[address_state]', usAddress.address_state);
-        formData.append('to[address_zip]', usAddress.address_zip);
-      } else {
-        // International Address - some fields optional
-        const intlAddress = payload.to as IntlAddress;
-
-        if (intlAddress.address_city) {
-          formData.append('to[address_city]', intlAddress.address_city);
-        }
-        if (intlAddress.address_state) {
-          formData.append('to[address_state]', intlAddress.address_state);
-        }
-        if (intlAddress.address_zip) {
-          formData.append('to[address_zip]', intlAddress.address_zip);
-        }
-      }
-
-      formData.append('to[address_country]', payload.to.address_country);
-      formData.append('from', 'adr_d07414d6c6ff34b7'); // default Lob address
-      formData.append('front', payload.front);
-      formData.append('back', payload.back);
-      formData.append('use_type', payload.use_type);
-
-      if (payload.send_date) {
-        formData.append('send_date', payload.send_date);
-      }
-
-      return await fetch(API_URL_POSTCARDS, {
+    verifyUSAddress: (payload: AddressLob) => {
+      const body = new URLSearchParams({
+        recipient: payload.name,
+        primary_line: payload.address_line1,
+        secondary_line: payload.address_line2 ?? '',
+        city: payload.address_city!,
+        state: payload.address_state!,
+        postal_code: payload.address_zip,
+      });
+      return fetch(API_URL_US_VER, {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${Buffer.from(`${apiKey}:`).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body,
+      });
+    },
+    verifyInternationalAddress: (payload: AddressLob) => {
+      const body = new URLSearchParams({
+        recipient: payload.name,
+        primary_line: payload.address_line1,
+        secondary_line: payload.address_line2 ?? '',
+        city: payload.address_city ?? '',
+        state: payload.address_state ?? '',
+        postal_code: payload.address_zip,
+        country: payload.address_country,
+      });
+      return fetch(API_URL_INTL_VER, {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${Buffer.from(`${apiKey}:`).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body,
+      });
+    },
+    createNewOrder:(payload: PostcardPayload) => {
+      return fetch(API_URL_POSTCARDS, {
         method: 'POST',
         headers: {
-          'Authorization': `Basic ${btoa(`${apiKey}:`)}`, // Basic auth encoding
-          'Content-Type': 'application/x-www-form-urlencoded',
+          "Authorization": `Basic ${Buffer.from(`${apiKey}:`).toString("base64")}`,
+          "Content-Type": "application/json",
         },
-        body: formData.toString(),
+        body: JSON.stringify(payload),
       });
     }
   }
 }
 
+// --- Types ---
+
 // Base address fields
 type BaseAddress = {
   name: string;
+  company?: string;
   address_line1: string;
-  address_line2?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  description?: string | null;
-  metadata?: Record<string, unknown>;
+  address_line2?: string;
+  email?: string;
+  phone?: string;
+  description?: string;
 };
-
 // US Address (domestic)
 type USAddress = BaseAddress & {
   address_city: string;
@@ -84,16 +76,16 @@ type USAddress = BaseAddress & {
   address_zip: string;
   address_country: 'US';
 };
-
 // International Address
 type IntlAddress = BaseAddress & {
   address_city?: string;
   address_state?: string;
-  address_zip: string | null;
+  address_zip: string;
   address_country: string; // 2-letter country code (ISO 3166), excluding US territories
 };
 
-type Address = USAddress | IntlAddress;
+export type AddressLob = USAddress | IntlAddress;
+
 
 type MergeVariables = {
   [key: string]: string; // Allows any key-value pair where both are strings
@@ -115,27 +107,27 @@ type QrCode = {
 };
 
 export type PostcardPayload = {
-  description: string;
-  to: Address;
-  from: Address | string;
+  to: AddressLob;
+  from?: AddressLob | string;
   front: string;
   back: string;
   size: "4x6" | "6x9" | "6x11";
-  mail_type: string;
-  merge_variables?: MergeVariables;
+  mail_type?: "usps_first_class" | "usps_standard";
+  description?: string;
   metadata?: Metadata;
-  send_date?: string; // ISO 8601 date-time string
-  use_type: "marketing"|"operational";
+  use_type?: "marketing"|"operational";
+  merge_variables?: MergeVariables;
   qr_code?: QrCode;
-  fsc: boolean;
-  print_speed: "core";
+  // send_date?: string; // ISO 8601 date-time string // NOT SUPPORTED!
+  // fsc?: boolean; // NOT SUPPORTED!
+  // print_speed?: "core"; // NOT SUPPORTED!
 };
 
 export type PostcardResponse = {
   id: string;
   description: string | null;
   metadata: Record<string, unknown>; // Flexible metadata object
-  to: Address;
+  to: AddressLob;
   url: string;
   carrier: string;
   front_template_id: string | null;
