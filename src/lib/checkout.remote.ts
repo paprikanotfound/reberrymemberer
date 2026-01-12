@@ -52,7 +52,7 @@ async function mockVerifyAddress(postal: PostalClient, addressTo: LobAddress) {
     // Available test values from postal.testAddresses
     address_line1: isUS ? 
       postal.testAddresses.us.deliverable : 
-      postal.testAddresses.intl.undeliverable,
+      postal.testAddresses.intl.deliverable,
   };
 
   console.log(`[DEV MODE] Testing address verification with: ${testAddress.address_line1}`);
