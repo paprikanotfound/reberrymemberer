@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { POSTCARD_DETAILS } from "$lib";
-  const SUPPORT_EMAIL = "reberrymemberer@paprika.fyi"
+  const SUPPORT_EMAIL = "reberrymemberer@paprika.fyi";
 </script>
 
 <div class="w-full min-h-full px-3 pb-3 flex flex-col">
@@ -91,7 +91,6 @@
         <span>©</span>
       </div>
       <div class="">
-        <!-- <p>Please send any questions to <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a>.</p> -->
         <p>Photography: <a href="https://instagram.com/hoyeonwang" target="_blank">Hoyeon Wang</a>.</p>
         <p class="mb-4"><a href="https://paprika.fyi" target="_blank">Paprika</a> © All rights reserved.</p>
       </div>

@@ -1,4 +1,10 @@
 <script lang="ts">
+	import { APP_CONFIG } from "$lib";
+	import { clearPersistedPage } from "$lib/components/canvas/persisted-page.svelte";
+  
+  // reset canvas on return
+  clearPersistedPage(APP_CONFIG.scribble.persist_front);
+  clearPersistedPage(APP_CONFIG.scribble.persist_back);
 </script>
 
 <div class="p-4 flex flex-col gap-4">

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createPersistedScribble, POSTCARD_DETAILS, type ScribbleContent } from "$lib";
+	import { APP_CONFIG, createPersistedScribble, POSTCARD_DETAILS, type ScribbleContent } from "$lib";
 	import { createCheckout } from "$lib/checkout.remote";
 	import { CheckoutSchema } from "$lib/checkout.types";
 	import Scribble from "$lib/components/scribble.svelte";
@@ -13,8 +13,8 @@
   let penMode = $state(false);
   
   // Create persisted state for both scribble instances
-  const scribbleFront = createPersistedScribble('postcard-front');
-  const scribbleBack = createPersistedScribble('postcard-back');
+  const scribbleFront = createPersistedScribble(APP_CONFIG.scribble.persist_front);
+  const scribbleBack = createPersistedScribble(APP_CONFIG.scribble.persist_back);
 
   // Set initial Send Date value
   const today = new Date();

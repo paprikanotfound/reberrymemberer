@@ -8,9 +8,7 @@ export const POSTCARD_DETAILS = {
   size: { w: 1875, h: 1275 },
   dimensions_label: "4x6 inches (10.16 x 15.24 cm)",
   provider: {
-    lob: {
-
-    },
+    lob: { },
     printone: {
       url_delivery_times: "https://www.postnl.nl/api/assets/blt43aa441bfc1e29f2/blt6d6203f1afe9f9aa/68199ff00c47c367afd62823/20250501-brochure-international-delivery-times.pdf",
     }
@@ -20,4 +18,11 @@ export const POSTCARD_DETAILS = {
 export const ROUTES = {
   send: '/write',
   return: '/return',
+}
+
+export const APP_CONFIG = {
+  scribble: {
+    persist_front: "pf__",
+    persist_back: "pb__",
+  }
 }
