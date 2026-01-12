@@ -247,3 +247,74 @@ export function isOpenAIRetryable(err: unknown, attempt: number): boolean {
 
   return false; // otherwise, do not retry
 }
+
+/**
+ * Determines whether a failed Resend API call should be retried.
+ * See https://resend.com/docs/api-reference/errors
+ * @param err The error thrown by the Resend API call
+ * @param nextAttempt The next attempt number (1-based)
+ * @returns True if the error is retryable, false otherwise
+ */
+export function isErrorRetryableResend(err: unknown, nextAttempt: number): boolean {
+  const MAX_RETRIES = 5;
+  if (nextAttempt > MAX_RETRIES) return false;
+
+  if (!err || typeof err !== "object") return false;
+
+  const status = (err as any).statusCode || (err as any).status;
+  const errorName = (err as any).name;
+  const message = (err as any).message || String(err);
+
+  // Retry on server errors (500)
+  // application_error, internal_server_error
+  if (status && status >= 500 && status < 600) return true;
+
+  // Retry on rate limiting (429) with exponential backoff
+  // rate_limit_exceeded, daily_quota_exceeded, monthly_quota_exceeded
+  if (status === 429) return true;
+
+  // Retry on concurrent idempotent requests (409)
+  // concurrent_idempotent_requests: "Try the request again later"
+  if (status === 409 && message.includes("concurrent")) return true;
+
+  // Retry on transient network errors
+  const transientNetworkErrors = [
+    "ECONNRESET",
+    "ETIMEDOUT",
+    "EAI_AGAIN",
+    "ENOTFOUND",
+    "ENETUNREACH",
+    "ECONNREFUSED",
+  ];
+  if (
+    errorName &&
+    transientNetworkErrors.some((errName) =>
+      errorName.toUpperCase().includes(errName)
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    transientNetworkErrors.some((errMsg) =>
+      message.toUpperCase().includes(errMsg)
+    )
+  ) {
+    return true;
+  }
+
+  // Retry on timeout messages
+  if (message.toLowerCase().includes("timeout")) return true;
+
+  // Non-retryable errors:
+  // 400: validation_error, invalid_idempotency_key
+  // 401: missing_api_key, restricted_api_key
+  // 403: invalid_api_key, validation_error (domain issues)
+  // 404: not_found
+  // 405: method_not_allowed
+  // 422: invalid_attachment, invalid_from_address, invalid_access, etc.
+  // 451: security_error
+
+  return false;
+}
+

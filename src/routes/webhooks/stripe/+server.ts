@@ -2,8 +2,9 @@ import { initDB } from "$lib/server/db";
 import { error, json } from "@sveltejs/kit";
 import Stripe from "stripe"
 import { initPostalClient, type LobAddress, type PostcardPayload, type PostcardResponse } from "$lib/server/lob.js";
-import { isErrorRetryableD1, tryWhile } from "$lib/utils/retry.js";
+import { isErrorRetryableD1, isErrorRetryableResend, tryWhile } from "$lib/utils/retry.js";
 import { initLucia } from "$lib/server/lucia.js";
+import { initResend } from "$lib/server/resend.js";
 
 
 async function fulfillOrder(
@@ -17,7 +18,7 @@ async function fulfillOrder(
   const sessionOrderId = session.client_reference_id;
   const email = session.customer_email;
 
-  if (!sessionOrderId) throw new Error("Missing client_reference_id!");
+  if (!sessionOrderId) error(401, "Missing client_reference_id!");
 
   // Retrieve unpaid order and update status.
   const order = await tryWhile(
@@ -28,9 +29,8 @@ async function fulfillOrder(
     }), 
     isErrorRetryableD1
   );
-  if (!order) {
-    throw new Error("Order has been fullfilled or not found!" + sessionOrderId);
-  }
+
+  if (!order) error(401, "Order has been fullfilled or not found!" + sessionOrderId);
 
   try {
 
@@ -49,12 +49,12 @@ async function fulfillOrder(
       use_type: 'operational',
       // send_date: order.send_date ?? undefined, // Note: Requires Pro Plan
     }
+    
     const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
-
     const resp = await lob.createNewOrder(payload);
     if (!resp.ok) {
       console.error(resp)
-      throw new Error(`Invalid postcard response!`);
+      error(401, "Invalid postcard response!");
     }
 
     const respContent: PostcardResponse = await resp.json()
@@ -77,12 +77,18 @@ async function fulfillOrder(
     );
   }
 
-  // Automatically register new users
   if (email) {
+    // Automatically sign-up new users
     const lucia = initLucia(platform.env.DB);
     await tryWhile(
       () => lucia.auth.registerUser(email), 
       isErrorRetryableD1
+    );
+    // Send confirmation email
+    const resend = initResend(platform.env.RESEND_API);
+    await tryWhile(
+      () => resend.sendConfirmationEmail(email, order.id.slice(0, 13)), // keeping order ids short 
+      isErrorRetryableResend
     );
   }
 }
@@ -107,7 +113,7 @@ const stripeWebhookHandler = (stripe: Stripe, platform: Readonly<App.Platform>) 
       await fulfillOrder(sessionExpanded, platform);
     },
     asyncPaymentFailed: async (event: Stripe.Event) => {
-      // TODO: notify user by email
+      // TODO: handle async payment failures
     },
   },
   charge: {

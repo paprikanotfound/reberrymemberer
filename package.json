@@ -1,7 +1,7 @@
 {
 	"name": "reberrymemberer",
 	"private": true,
-	"version": "0.0.2",
+	"version": "0.2.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev --port 3005 --host",
@@ -50,9 +50,11 @@
 	},
 	"dependencies": {
 		"@oslojs/crypto": "^1.0.1",
-    "@oslojs/encoding": "^1.1.0",
+		"@oslojs/encoding": "^1.1.0",
 		"compressorjs": "^1.2.1",
+		"dedent": "^1.7.1",
 		"perfect-freehand": "^1.2.2",
+		"resend": "^6.7.0",
 		"runed": "^0.31.1",
 		"stripe": "^18.3.0",
 		"zod": "^4.0.13"
