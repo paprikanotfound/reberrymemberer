@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { APP_CONFIG, createPersistedScribble, POSTCARD_DETAILS, type ScribbleContent } from "$lib";
+	import { APP_CONFIG, createPersistedScribble, POSTCARD_CONFIG, type ScribbleContent } from "$lib";
 	import { createCheckout } from "$lib/checkout.remote";
 	import { CheckoutSchema } from "$lib/checkout.types";
 	import Scribble from "$lib/components/scribble.svelte";
@@ -36,30 +36,49 @@
   // Track if the selected country is US
   let isUSAddress = $derived(createCheckout.fields.country.value() === 'US');
   
+  
   async function createPageImage(content: ScribbleContent, type?: string, quality?: number) {
     return new Promise<Blob>(async (res, rej) => {
       const canvas = document.createElement("canvas");
-      canvas.width = POSTCARD_DETAILS.size.w;
-      canvas.height = POSTCARD_DETAILS.size.h;
-      // ctx
+      // Export with bleed dimensions
+      canvas.width = POSTCARD_CONFIG.bleed.w;
+      canvas.height = POSTCARD_CONFIG.bleed.h;
+
       const ctx = canvas.getContext("2d");
       if (!ctx) return rej("No 2D context");
-      // bg color
+
+      // Calculate bleed offset (centered)
+      const offsetX = (POSTCARD_CONFIG.bleed.w - POSTCARD_CONFIG.trim.w) / 2;
+      const offsetY = (POSTCARD_CONFIG.bleed.h - POSTCARD_CONFIG.trim.h) / 2;
+
+      // Fill background
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      // bg img
+
+      // Save context state
+      ctx.save();
+      // Translate to center the trim area with bleed
+      ctx.translate(offsetX, offsetY);
+
+      // Draw background image (if any) - scale to trim size
       if (content.backgroundImage && content.backgroundImage.includes(',')) {
         try {
           const elmImage = await loadImage(base64ToBlob(content.backgroundImage));
           if (elmImage) {
-            drawObjectCover(ctx, elmImage, canvas.width, canvas.height, 0.5);
+            drawObjectCover(ctx, elmImage, POSTCARD_CONFIG.trim.w, POSTCARD_CONFIG.trim.h, 0.5);
           }
         } catch (e) {
           console.error("Failed to load background image:", e);
         }
       }
-      drawStokes(ctx, canvas.width, canvas.height, content.strokes);
-      // save
+
+      // Draw strokes (coordinates are in trim space)
+      drawStokes(ctx, POSTCARD_CONFIG.trim.w, POSTCARD_CONFIG.trim.h, content.strokes);
+
+      // Restore context
+      ctx.restore();
+
+      // Export
       canvas.toBlob(blob => {
         if (blob) res(blob);
         else rej("Failed to export blob");
@@ -106,9 +125,10 @@
 </div>
 
 <!-- testing image generation
+-->
 <button onclick={async () => {
   // Test export and download front image
-  const frontBlob = await exportImage(scribbleFront.content);
+  const frontBlob = await createPageImage(scribbleFront.content);
   const frontUrl = URL.createObjectURL(frontBlob);
   const frontLink = document.createElement('a');
   frontLink.href = frontUrl;
@@ -116,14 +136,15 @@
   frontLink.click();
   URL.revokeObjectURL(frontUrl);
   // Test export and download back image
-  const backBlob = await exportImage(scribbleBack.content);
+  const backBlob = await createPageImage(scribbleBack.content);
   const backUrl = URL.createObjectURL(backBlob);
   const backLink = document.createElement('a');
   backLink.href = backUrl;
   backLink.download = 'postcard-back.png';
   backLink.click();
   URL.revokeObjectURL(backUrl);
-}}>(download)</button> -->
+}}>(download)</button> 
+
 
 <div class="flex flex-col items-start justify-center gap-8 sm:gap-12 p-3">
   <div class="grid grid-cols-3 w-full">
@@ -135,12 +156,15 @@
       <span>001</span>
       <span>Front Page</span>
     </div>
-    <div class="w-full" style="aspect-ratio: {POSTCARD_DETAILS.size.w/POSTCARD_DETAILS.size.h};">
+    <div class="w-full" style="aspect-ratio: {POSTCARD_CONFIG.trim.w/POSTCARD_CONFIG.trim.h};">
       <Scribble
         class="w-full h-full"
         showBackgroundSelector={true}
-        targetWidth={POSTCARD_DETAILS.size.w}
-        targetHeight={POSTCARD_DETAILS.size.h}
+        showSafeZone={true}
+        safeZoneWidth={POSTCARD_CONFIG.safe.w}
+        safeZoneHeight={POSTCARD_CONFIG.safe.h}
+        targetWidth={POSTCARD_CONFIG.trim.w}
+        targetHeight={POSTCARD_CONFIG.trim.h}
         bind:strokes={scribbleFront.content.strokes}
         bind:color={scribbleFront.content.color}
         bind:size={scribbleFront.content.size}
@@ -159,11 +183,19 @@
       <span>002</span>
       <span>Back Page</span>
     </div>
-    <div class="w-full" style="aspect-ratio: {POSTCARD_DETAILS.size.w/POSTCARD_DETAILS.size.h};">
+    <div class="w-full" style="aspect-ratio: {POSTCARD_CONFIG.trim.w/POSTCARD_CONFIG.trim.h};">
       <Scribble
         class="w-full h-full"
-        targetWidth={POSTCARD_DETAILS.size.w}
-        targetHeight={POSTCARD_DETAILS.size.h}
+        showSafeZone={true}
+        safeZoneWidth={POSTCARD_CONFIG.safe.w}
+        safeZoneHeight={POSTCARD_CONFIG.safe.h}
+        showInkFreeArea={true}
+        inkFreeWidth={POSTCARD_CONFIG.inkFree.w}
+        inkFreeHeight={POSTCARD_CONFIG.inkFree.h}
+        inkFreeOffsetRight={POSTCARD_CONFIG.inkFree.offsetRight}
+        inkFreeOffsetBottom={POSTCARD_CONFIG.inkFree.offsetBottom}
+        targetWidth={POSTCARD_CONFIG.trim.w}
+        targetHeight={POSTCARD_CONFIG.trim.h}
         bind:strokes={scribbleBack.content.strokes}
         bind:color={scribbleBack.content.color}
         bind:size={scribbleBack.content.size}

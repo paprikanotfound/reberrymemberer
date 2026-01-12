@@ -2,7 +2,7 @@ import { form, getRequestEvent } from "$app/server"
 import { error, invalid, redirect } from "@sveltejs/kit";
 import { Stripe } from "stripe"
 import { initDB } from "$lib/server/db";
-import { POSTCARD_DETAILS, ROUTES } from "$lib";
+import { POSTCARD_CONFIG, ROUTES } from "$lib";
 import { CheckoutSchema } from "./checkout.types";
 import { isErrorRetryableD1, isErrorRetryableR2, tryWhile } from "./utils/retry";
 import { initPostalClient, type LobAddress, type PostalClient } from "./server/lob";
@@ -27,7 +27,7 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
             name: 'A6 Postcard',
             description: 'Reberrymemberer Postal Services.'
           },
-          unit_amount: POSTCARD_DETAILS.cost_unit,
+          unit_amount: POSTCARD_CONFIG.cost_unit,
         },
         quantity: 1,
       },

@@ -24,6 +24,15 @@
     onRedo?: () => void;
     canUndo?: boolean;
     canRedo?: boolean;
+    showSafeZone?: boolean;
+    safeZoneWidth?: number;
+    safeZoneHeight?: number;
+    showInkFreeArea?: boolean;
+    inkFreeWidth?: number;
+    inkFreeHeight?: number;
+    inkFreeOffsetRight?: number;
+    inkFreeOffsetBottom?: number;
+    children?: import('svelte').Snippet;
     [key: string]: any;
   }
 
@@ -32,14 +41,23 @@
     backgroundImage = $bindable<string | null>(null),
     color = $bindable('#000000'),
     size = $bindable(5),
-    targetWidth = 1819,
-    targetHeight = 1311,
+    targetWidth = 1800,
+    targetHeight = 1200,
     showBackgroundSelector = false,
     penMode = $bindable(false),
     onUndo,
     onRedo,
     canUndo = false,
     canRedo = false,
+    showSafeZone = false,
+    safeZoneWidth,
+    safeZoneHeight,
+    showInkFreeArea = false,
+    inkFreeWidth,
+    inkFreeHeight,
+    inkFreeOffsetRight,
+    inkFreeOffsetBottom,
+    children,
     class: restClasses,
     ...restProps
   }: Props = $props();
@@ -503,6 +521,40 @@
       {/if}
     </svg>
   </div>
+  
+  <!-- Overlays (absolute positioned over the canvas) -->
+  {#if showSafeZone || showInkFreeArea || children}
+    <div class="absolute inset-0 pointer-events-none z-30">
+      <!-- Safe zone indicator (optional) -->
+      {#if showSafeZone && safeZoneWidth && safeZoneHeight}
+        <div
+          class="absolute border border-dashed border-blue-400/50"
+          style:left="{((targetWidth - safeZoneWidth) / 2 / targetWidth) * 100}%"
+          style:right="{((targetWidth - safeZoneWidth) / 2 / targetWidth) * 100}%"
+          style:top="{((targetHeight - safeZoneHeight) / 2 / targetHeight) * 100}%"
+          style:bottom="{((targetHeight - safeZoneHeight) / 2 / targetHeight) * 100}%"
+        ></div>
+      {/if}
+
+      <!-- Ink-free area indicator (optional) -->
+      {#if showInkFreeArea && inkFreeWidth && inkFreeHeight && inkFreeOffsetRight !== undefined && inkFreeOffsetBottom !== undefined}
+        <div
+          class="pointer-events-auto cursor-not-allowed absolute bg-red-900/5 border border-dashed border-red-400/70"
+          style:width="{(inkFreeWidth / targetWidth) * 100}%"
+          style:height="{(inkFreeHeight / targetHeight) * 100}%"
+          style:right="{(inkFreeOffsetRight / targetWidth) * 100}%"
+          style:bottom="{(inkFreeOffsetBottom / targetHeight) * 100}%"
+        >
+          <span class="absolute top-1 left-1 text-[10px] text-red-600 font-medium">Address Area</span>
+        </div>
+      {/if}
+
+      <!-- Custom snippet for additional overlays -->
+      {#if children}
+        {@render children()}
+      {/if}
+    </div>
+  {/if}
 {/snippet}
 
 
@@ -515,7 +567,7 @@
       onZoomPanChange: handleZoomPanChange,
       getCanvasSize: () => ({ width: boxWidth, height: boxHeight }),
       minScale: 1,
-      maxScale: 4,
+      maxScale: 5.5,
       enabled: isFullscreen
     }}
   >
@@ -605,6 +657,14 @@
     max-width: calc(100vw - 2rem);
     max-height: calc(100vh - 2rem);
     touch-action: none;
+  }
+  
+  /* postard canvas-like grid  */
+  .grid-bg {
+    background-image: 
+      linear-gradient(to right, #dedddd .5px, transparent .5px),
+      linear-gradient(to bottom, #dedddd .5px, transparent .5px);
+    background-size: 10px 10px; /* adjust grid cell size */
   }
 
   /* Toolbar button slide-up animation with wave effect */

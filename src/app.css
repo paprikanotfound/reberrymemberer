@@ -54,28 +54,3 @@
 @utility postcard-shadow {
 	box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 2px -1px, rgba(0, 0, 0, 0.9) 0px 1px 2px -1px;
 }
-
-/* measure element based on parent's size */
-.aspect-container {
-	container-type: size;
-}
-@container (aspect-ratio > 1) {
-	.aspect-box {
-		height: 100%;
-		width: auto;
-	}
-}
-@container (aspect-ratio <= 1) {
-	.aspect-box {
-		width: 100%;
-		height: auto;
-	}
-}
-
-/* postard canvas-like grid  */
-.grid-bg {
-  background-image: 
-    linear-gradient(to right, #dedddd .5px, transparent .5px),
-    linear-gradient(to bottom, #dedddd .5px, transparent .5px);
-  background-size: 10px 10px; /* adjust grid cell size */
-}

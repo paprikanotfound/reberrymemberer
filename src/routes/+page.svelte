@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { POSTCARD_DETAILS } from "$lib";
+	import { POSTCARD_CONFIG } from "$lib";
   const SUPPORT_EMAIL = "reberrymemberer@paprika.fyi";
 </script>
 
 <div class="w-full min-h-full px-3 pb-3 flex flex-col">
   <section class="relative h-[100dvh] flex flex-col justify-center items-center">
     <img 
-      class="select-none object-cover h-44 sm:h-96 sm:-translate-x-10 postcard-shadow" 
+      class="select-none object-cover h-40 sm:h-72 sm:-translate-x-10 postcard-shadow" 
       loading="eager"
       src="./examples/front1.jpg" alt="" 
     />
@@ -16,7 +16,7 @@
       <span class="max-sm:hidden inline-block"><a href="/write">Send</a>.</span>
     </span>
     <img 
-      class="select-none object-cover h-44 sm:h-96 sm:translate-x-10 postcard-shadow" 
+      class="select-none object-cover h-40 sm:h-72 sm:translate-x-10 postcard-shadow" 
       loading="eager"
       src="./examples/back3.jpg" alt="" 
     />
@@ -33,7 +33,7 @@
       <div class="flex flex-col gap-4">
         <div>
           <p class="italic">How much does it cost?</p>
-          <p>{POSTCARD_DETAILS.cost_label}</p>
+          <p>{POSTCARD_CONFIG.cost_label}</p>
           <p class="text-sm"><i>Prices are shown in your local currency at checkout.</i></p>
         </div>
         <hr>
