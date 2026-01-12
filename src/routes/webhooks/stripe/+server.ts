@@ -10,6 +10,7 @@ async function fulfillOrder(
   session: Stripe.Response<Stripe.Checkout.Session>,
   platform: Readonly<App.Platform>,
 ) {
+  
   // TODO: handle different quantities & item types
 
   const db = initDB(platform!.env.DB);
@@ -36,17 +37,17 @@ async function fulfillOrder(
     // Create new postcard order
     const recipientAddress: LobAddress = JSON.parse(order.recipient_address);
     const payload: PostcardPayload = {
-      from: 'adr_d07414d6c6ff34b7', // Using Lob's address
+      from: platform!.env.DEFAULT_SEND_ADR_ID, // Note: We're using a default US address for all orders
       to: recipientAddress,
       front: `${platform!.env.R2_DELIVER_URL}/${order.front_image_url}`,
       back: `${platform!.env.R2_DELIVER_URL}/${order.back_image_url}`,
       metadata: {
         order_id: order.id,
       },
-      size: "4x6",
+      size: "4x6", // Note: This is the only size supported internationally.
       mail_type: 'usps_first_class',
       use_type: 'operational',
-      // send_date: order.send_date ?? undefined, // Unsupported for now
+      // send_date: order.send_date ?? undefined, // Note: Requires Pro Plan
     }
     const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
 

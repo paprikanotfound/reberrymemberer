@@ -9,6 +9,7 @@ declare global {
                 R2: R2Bucket;
                 DB: D1Database;
                 ENV: "production"|"development";
+                DEFAULT_SEND_ADR_ID: string;
                 RESEND_API: string;
                 LOB_API_PUB: string;
                 LOB_API_SECRET: string;

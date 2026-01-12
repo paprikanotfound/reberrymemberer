@@ -52,7 +52,10 @@
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
 	 */
-	"vars": { "ENV": "production" },
+	"vars": { 
+		"ENV": "production", 
+		"DEFAULT_SEND_ADR_ID": "adr_55fcc564ac7db7a3", 
+	},
 	/**
 	 * Service Bindings (communicate between multiple Workers)
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
