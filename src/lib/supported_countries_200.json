@@ -2806,6 +2806,31 @@
   },
   {
     "alternativeNames": [
+      "대한민국",
+      "Coreia do Sul",
+      "Coreia do Sul",
+      "Zuid-Korea",
+      "Južna Koreja",
+      "کره شمالی",
+      "Südkorea",
+      "Corea del Sur",
+      "Corée du Sud",
+      "大韓民国",
+      "Corea del Sud",
+      "韩国",
+      "Güney Kore"
+    ],
+    "iso31661Alpha2": "KR",
+    "iso31661Alpha3": "KOR",
+    "englishName": "Korea, Republic of",
+    "nativeName": "대한민국",
+    "supported": true,
+    "phonePrefix": "+82",
+    "region": "WORLD",
+    "internationalDuration": "6-9"
+  },
+  {
+    "alternativeNames": [
       "코소보",
       "科索沃",
       "Kosova"
@@ -5043,31 +5068,6 @@
     "phonePrefix": "+500",
     "region": "WORLD",
     "internationalDuration": "8-1"
-  },
-  {
-    "alternativeNames": [
-      "대한민국",
-      "Coreia do Sul",
-      "Coreia do Sul",
-      "Zuid-Korea",
-      "Južna Koreja",
-      "کره شمالی",
-      "Südkorea",
-      "Corea del Sur",
-      "Corée du Sud",
-      "大韓民国",
-      "Corea del Sud",
-      "韩国",
-      "Güney Kore"
-    ],
-    "iso31661Alpha2": "KR",
-    "iso31661Alpha3": "KOR",
-    "englishName": "Korea, Republic of",
-    "nativeName": "대한민국",
-    "supported": true,
-    "phonePrefix": "+82",
-    "region": "WORLD",
-    "internationalDuration": "6-9"
   },
   {
     "alternativeNames": [

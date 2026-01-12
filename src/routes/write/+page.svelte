@@ -3,7 +3,7 @@
 	import { createCheckout } from "$lib/checkout.remote";
 	import { CheckoutSchema } from "$lib/checkout.types";
 	import Scribble from "$lib/components/scribble.svelte";
-  import countries from '$lib/countries.json';
+  import countries from '$lib/supported_countries_200.json';
 	import { drawObjectCover, drawStokes } from "$lib/utils/canvas";
 	import { base64ToBlob } from "$lib/utils/files";
 	import { initForm } from "$lib/utils/forms.svelte";
