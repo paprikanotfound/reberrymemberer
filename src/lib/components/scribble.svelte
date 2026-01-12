@@ -12,6 +12,7 @@
 
   interface Props {
     strokes?: Stroke[];
+    backgroundColor?: string;
     backgroundImage?: string | null;
     color?: string;
     size?: number;
@@ -38,6 +39,7 @@
 
   let {
     strokes = $bindable([]),
+    backgroundColor = $bindable("#ffffff"),
     backgroundImage = $bindable<string | null>(null),
     color = $bindable('#000000'),
     size = $bindable(5),
@@ -451,6 +453,7 @@
     class="relative overflow-hidden cursor-crosshair {classes}"
     class:touch-none={isFullscreen}
     class:fullscreen-canvas={isFullscreenCanvas}
+    style:background-color="{backgroundColor}"
     style:aspect-ratio="{targetWidth}/{targetHeight}"
     {...!isFullscreen ? restProps : {}}
   >
@@ -601,7 +604,7 @@
         style:transition={zoomPanState.scale > 1 ? 'none' : 'transform 0.2s ease-out'}
         transition:scale={{ duration: 300, start: 0.95, easing: cubicOut }}
       >
-        {@render canvas('bg-white grid-bg', true)}
+        {@render canvas(`grid-bg`, true)}
       </div>
     </div>
   </div>
@@ -627,7 +630,16 @@
       {@render toolbar()}
     </div>
 
-    {@render canvas(`bg-white border border-zinc-200 relative ${restClasses}`)}
+    {@render canvas(`border border-zinc-200 relative ${restClasses}`)}
+
+    <!-- Mobile tap overlay to trigger fullscreen -->
+    {#if isMobile.current}
+      <button
+        onclick={toggleFullscreen}
+        class="absolute inset-0 z-40 cursor-pointer bg-transparent"
+        aria-label="Tap to enter fullscreen"
+      ></button>
+    {/if}
   </div>
 {/if}
 
@@ -658,7 +670,7 @@
     max-height: calc(100vh - 2rem);
     touch-action: none;
   }
-  
+
   /* postard canvas-like grid  */
   .grid-bg {
     background-image: 

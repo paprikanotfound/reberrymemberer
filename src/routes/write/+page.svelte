@@ -37,7 +37,7 @@
   let isUSAddress = $derived(createCheckout.fields.country.value() === 'US');
   
   
-  async function createPageImage(content: ScribbleContent, type?: string, quality?: number) {
+  async function createPageImage(content: ScribbleContent, type?: string, quality?: number, bgColor?: string) {
     return new Promise<Blob>(async (res, rej) => {
       const canvas = document.createElement("canvas");
       // Export with bleed dimensions
@@ -52,7 +52,7 @@
       const offsetY = (POSTCARD_CONFIG.bleed.h - POSTCARD_CONFIG.trim.h) / 2;
 
       // Fill background
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = bgColor ? bgColor : "#FFFFFF";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Save context state
@@ -90,7 +90,7 @@
     e.preventDefault();
     const form = e.currentTarget.form;
     
-    const frontBlob = await createPageImage(scribbleFront.content, 'image/jpeg', 0.95);
+    const frontBlob = await createPageImage(scribbleFront.content, 'image/jpeg', 0.95, POSTCARD_CONFIG.front_background);
     const file = new File([frontBlob], 'postcard.png', { type: 'image/png' });
     createCheckout.fields.frontImage.set(file);
 
@@ -125,7 +125,6 @@
 </div>
 
 <!-- testing image generation
--->
 <button onclick={async () => {
   // Test export and download front image
   const frontBlob = await createPageImage(scribbleFront.content);
@@ -144,7 +143,7 @@
   backLink.click();
   URL.revokeObjectURL(backUrl);
 }}>(download)</button> 
-
+-->
 
 <div class="flex flex-col items-start justify-center gap-8 sm:gap-12 p-3">
   <div class="grid grid-cols-3 w-full">
@@ -165,6 +164,7 @@
         safeZoneHeight={POSTCARD_CONFIG.safe.h}
         targetWidth={POSTCARD_CONFIG.trim.w}
         targetHeight={POSTCARD_CONFIG.trim.h}
+        backgroundColor={POSTCARD_CONFIG.front_background}
         bind:strokes={scribbleFront.content.strokes}
         bind:color={scribbleFront.content.color}
         bind:size={scribbleFront.content.size}

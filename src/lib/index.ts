@@ -15,7 +15,8 @@ export const POSTCARD_CONFIG = {
     h: 713,                         // 2.375" at 300 DPI
     offsetBottom: 38,               // 0.125" at 300 DPI
     offsetRight: 45                 // 0.15" at 300 DPI
-  }
+  },
+  front_background: "#F6F2F1",
 }
 
 export const ROUTES = {
