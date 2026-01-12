@@ -1,17 +1,18 @@
 import { form, getRequestEvent } from "$app/server"
-import { error, invalid, redirect } from "@sveltejs/kit";
+import { error, invalid } from "@sveltejs/kit";
 import { Stripe } from "stripe"
 import { initDB } from "$lib/server/db";
 import { POSTCARD_CONFIG, ROUTES } from "$lib";
 import { CheckoutSchema } from "./checkout.types";
-import { isErrorRetryableD1, isErrorRetryableR2, tryWhile } from "./utils/retry";
+import { isErrorRetryableD1, tryWhile } from "./utils/retry";
 import { initPostalClient, type LobAddress, type PostalClient } from "./server/lob";
+import { initS3 } from "./server/S3";
 
 // Constants
 const BUCKET_PATHS = {
   // Delete objects after 90 day(s): "tmp/90/*"
   // To allow time for customer support issues.
-  uploadCheckoutAssetPath: (filename: string, isDevEnv: boolean) => `tmp/90/reberrymemberer/${isDevEnv ?"dev":"prod"}/${filename}`,
+  uploadCheckoutAssetPath: (filename: string, isDevEnv: boolean) => `tmp/90/reberrymemberer/${isDevEnv ? "dev":"prod"}/${filename}`,
 }
 
 async function createStripeCheckoutSession(secret: string, origin: string, client_reference_id: string, expires_in: number) {
@@ -51,7 +52,7 @@ async function mockVerifyAddress(postal: PostalClient, addressTo: LobAddress) {
     // Available test values from postal.testAddresses
     address_line1: isUS ? 
       postal.testAddresses.us.deliverable : 
-      postal.testAddresses.intl.deliverable,
+      postal.testAddresses.intl.undeliverable,
   };
 
   console.log(`[DEV MODE] Testing address verification with: ${testAddress.address_line1}`);
@@ -150,6 +151,8 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
     invalid(message);
   }
   
+  console.log("Creating checkout session...");
+
   // Create a Stripe session
   const session = await createStripeCheckoutSession(
     platform!.env.STRIPE_API_SECRET,
@@ -157,20 +160,26 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
     clientRefId,
     60 * 60 * 1,
   );
+
   if (!session.url) error(500, 'Unable to create checkout session. Please try again.')
 
-  // Upload postcard page images
+  console.log("Generating signed URLs...");
+
+  // Generate R2 keys for postcard page images
   const keyFront = BUCKET_PATHS.uploadCheckoutAssetPath(`${clientRefId}_front.jpg`, devEnv);
   const keyBack = BUCKET_PATHS.uploadCheckoutAssetPath(`${clientRefId}_back.jpg`, devEnv);
 
-  await tryWhile(
-    async () => platform!.env.R2.put(keyFront, await request.frontImage.arrayBuffer()),
-    isErrorRetryableR2,
-  );
-  await tryWhile(
-    async () => platform!.env.R2.put(keyBack, await request.backImage.arrayBuffer()),
-    isErrorRetryableR2,
-  );
+  // Generate presigned URLs that the client will use to upload images
+  const s3 = initS3({
+    endpoint: platform!.env.R2_ENDPOINT,
+    accessKeyId: platform!.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: platform!.env.R2_SECRET_ACCESS_KEY,
+    bucket: platform!.env.R2_BUCKET,
+  });
+  const frontUploadUrl = await s3.getSignedUrl(keyFront, "put", "image/jpeg", 60 * 10);
+  const backUploadUrl = await s3.getSignedUrl(keyBack, "put", "image/jpeg", 60 * 10);
+
+  console.log("Creating draft order...")
 
   // Create new order
   const db = initDB(platform!.env.DB);
@@ -189,5 +198,13 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
 
   if (!resp) error(500, 'Unable to process your order. Please try again.');
 
-  redirect(301, session.url);
+  // Return upload URLs and checkout URL for client-side handling
+  // redirect(301, session.url);
+  return {
+    checkoutUrl: session.url,
+    uploadUrls: {
+      front: frontUploadUrl,
+      back: backUploadUrl,
+    },
+  };
 });

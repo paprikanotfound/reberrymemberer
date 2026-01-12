@@ -23,8 +23,6 @@ export const CheckoutSchema = z.object({
   postalCode: z.string(),
   country: z.string().min(1, "Please select a country").length(2, "Invalid country code"),
   sendDate: SendDateSchema,
-  frontImage: z.file().min(1, "Front page is required"),
-  backImage: z.file().min(1, "Back page is required"),
 }).superRefine((data, ctx) => {
   const isUS = data.country === 'US';
 

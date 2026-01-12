@@ -8,8 +8,10 @@
 	import { base64ToBlob } from "$lib/utils/files";
 	import { initForm } from "$lib/utils/forms.svelte";
 	import { loadImage } from "$lib/utils/images";
+	import { uploadContent } from "$lib/utils/upload";
   import { onMount, tick, untrack } from 'svelte';
 
+  let redirectingToCheckout = $state(false);
   let penMode = $state(false);
   
   // Create persisted state for both scribble instances
@@ -84,22 +86,6 @@
         else rej("Failed to export blob");
       }, type, quality);
     })
-  }
-
-  async function injectImgFieldsAndSubmit(e: MouseEvent & { currentTarget: EventTarget & HTMLButtonElement; }) {
-    e.preventDefault();
-    const form = e.currentTarget.form;
-    
-    const frontBlob = await createPageImage(scribbleFront.content, 'image/jpeg', 0.95, POSTCARD_CONFIG.front_background);
-    const file = new File([frontBlob], 'postcard.png', { type: 'image/png' });
-    createCheckout.fields.frontImage.set(file);
-
-    const backBlob = await createPageImage(scribbleBack.content, 'image/jpeg', 0.95);
-    const fileBack = new File([backBlob], 'postcard.png', { type: 'image/png' });
-    createCheckout.fields.backImage.set(fileBack);
-
-    await tick();
-    form?.requestSubmit();
   }
 
   // Detect pen interactions anywhere on the page
@@ -215,9 +201,29 @@
       <span>Address & Details</span>
     </div>
 
-    <form {...createCheckout.preflight(CheckoutSchema)} enctype="multipart/form-data" class="flex flex-col gap-6">
-      <input hidden {...createCheckout.fields.frontImage.as('file')} />
-      <input hidden {...createCheckout.fields.backImage.as('file')} />
+    <form {...createCheckout.preflight(CheckoutSchema).enhance(async ({submit,form}) => {
+      await submit();
+      if (createCheckout.result) {
+        redirectingToCheckout = true;
+        const { checkoutUrl, uploadUrls } = createCheckout.result;
+
+        // Generate page images
+        const frontBlob = await createPageImage(scribbleFront.content, 'image/jpeg', 0.95, POSTCARD_CONFIG.front_background);
+        const backBlob = await createPageImage(scribbleBack.content, 'image/jpeg', 0.95);
+
+        // Upload images to R2 using multipart upload
+        await Promise.allSettled([
+          uploadContent(uploadUrls.front, frontBlob),
+          uploadContent(uploadUrls.back, backBlob),
+        ]);
+
+        // redirect to checkout
+        window.location.href = checkoutUrl;
+        
+        redirectingToCheckout = false;
+        form.reset();
+      }
+    })} class="flex flex-col gap-6">
 
       <!-- <label>
         Send Date: <input {...createCheckout.fields.sendDate.as('date')} />
@@ -308,7 +314,7 @@
       </div>
 
       <div id="action">
-        <button class="form flex gap-1" onclick={injectImgFieldsAndSubmit}>
+        <button class="form flex gap-1">
           {#if !!createCheckout.pending}
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin lucide lucide-loader-icon lucide-loader"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>
           {/if}
