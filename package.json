@@ -1,7 +1,7 @@
 {
 	"name": "reberrymemberer",
 	"private": true,
-	"version": "0.0.1",
+	"version": "0.2.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev --port 3005 --host",
@@ -22,10 +22,9 @@
 		"@cloudflare/vitest-pool-workers": "^0.8.71",
 		"@eslint/compat": "^1.2.5",
 		"@eslint/js": "^9.18.0",
-		"@inlang/paraglide-js": "^2.2.0",
 		"@sveltejs/adapter-auto": "^6.0.0",
 		"@sveltejs/adapter-cloudflare": "^7.0.5",
-		"@sveltejs/kit": "2.43.6",
+		"@sveltejs/kit": "^2.49.3",
 		"@sveltejs/vite-plugin-svelte": "^5.1.1",
 		"@tailwindcss/vite": "^4.0.0",
 		"@testing-library/jest-dom": "^6.8.0",
@@ -50,15 +49,14 @@
 		"wrangler": "^4.39.0"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.856.0",
-		"@aws-sdk/s3-request-presigner": "^3.856.0",
-		"@types/node": "^24.5.2",
-		"bits-ui": "^2.8.13",
+		"@oslojs/crypto": "^1.0.1",
+		"@oslojs/encoding": "^1.1.0",
 		"compressorjs": "^1.2.1",
+		"dedent": "^1.7.1",
 		"perfect-freehand": "^1.2.2",
+		"resend": "^6.7.0",
 		"runed": "^0.31.1",
 		"stripe": "^18.3.0",
-		"svelte-sonner": "^1.0.5",
 		"zod": "^4.0.13"
 	}
 }

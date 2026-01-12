@@ -1,4 +1,4 @@
-import type { Stroke } from "$lib/components/canvas/types";
+import type { Stroke } from "$lib/components/scribble-state.svelte";
 import getStroke from "perfect-freehand";
 
 
@@ -41,11 +41,16 @@ export function drawObjectCover(
   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
 }
 
-export function drawStokes(ctx: CanvasRenderingContext2D, targetWidth: number, targetHeight: number, strokes: Stroke[]) {
+export function drawStokes(
+  ctx: CanvasRenderingContext2D, 
+  targetWidth: number, 
+  targetHeight: number, 
+  strokes: Stroke[],
+) {
   for (let str of strokes) {
     // Calculate scale factors based on the original stroke box
-    const scaleX = targetWidth / str.box.w;
-    const scaleY = targetHeight / str.box.h;
+    const scaleX = str.targetBox ? (targetWidth / str.targetBox.w) : 1;
+    const scaleY = str.targetBox ? (targetHeight / str.targetBox.h) : 1;
     const scale = Math.min(scaleX, scaleY);
 
     const stroke = getStroke(str.points, str.options);

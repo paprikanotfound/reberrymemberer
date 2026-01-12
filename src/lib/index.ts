@@ -1,31 +1,33 @@
-import type { AddressDetails } from "./send.remote";
 
+export { createPersistedScribble, clearPersistedScribble, type PersistedScribble, type ScribbleContent } from './components/scribble-state.svelte';
 
-export const POSTCARD = { 
-  cost_label: "3€",
-  cost_unit: 300,
+export const POSTCARD_CONFIG = {
+  cost_label: "Each postcard costs 2.60 € (approx. $3 USD).",
+  cost_unit: 260,
+  cost_currency: "eur",
   type: "image/jpeg",
-  size: { w: 1819, h: 1311 },
-  url_delivery_times: "https://www.postnl.nl/api/assets/blt43aa441bfc1e29f2/blt6d6203f1afe9f9aa/68199ff00c47c367afd62823/20250501-brochure-international-delivery-times.pdf",
+  dimensions_label: "4x6 inches (10.16 x 15.24 cm)",
+  // At 300 DPI
+  bleed: { w: 1875, h: 1275 },     // 4.25" x 6.25" - final export size
+  trim: { w: 1800, h: 1200 },      // 4" x 6" - user working size
+  safe: { w: 1763, h: 1163 },      // 3.875" x 5.875"
+  inkFree: {                       // Bottom-right ink-free area (relative to trim)
+    w: 985,                         // 3.2835" at 300 DPI
+    h: 713,                         // 2.375" at 300 DPI
+    offsetBottom: 38,               // 0.125" at 300 DPI
+    offsetRight: 45                 // 0.15" at 300 DPI
+  },
+  front_background: "#F6F2F1",
 }
 
-/**
- * Workaround for SvelteKit `command`/`devalue` serialization issue:
- *
- * Korean (and other non-ASCII) characters can trigger `InvalidCharacterError`
- * when sent directly over the wire. To prevent this, we URL-encode all fields
- * before sending them to the server, and decode them again on receipt.
- *
- * 🚧 Remove once SvelteKit/devalue fully supports Unicode serialization.
- */
-export function encodeAddressDetails(addr: AddressDetails) {
-  return <AddressDetails> Object.fromEntries(
-    Object.entries(addr).map(([k, v]) => [k, encodeURIComponent(v ?? '')])
-  );
+export const ROUTES = {
+  send: '/write',
+  return: '/return',
 }
 
-export function decodeAddressDetails(addr: AddressDetails) {
-  return <AddressDetails> Object.fromEntries(
-    Object.entries(addr).map(([k, v]) => [k, decodeURIComponent(v ?? '')])
-  );
+export const APP_CONFIG = {
+  scribble: {
+    persist_front: "pf__",
+    persist_back: "pb__",
+  }
 }

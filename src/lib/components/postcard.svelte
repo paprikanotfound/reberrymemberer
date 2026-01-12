@@ -217,7 +217,7 @@
       style="filter: brightness(var(--brightness));" 
       loading="eager"
       {src} alt="" 
-      />
+    />
     <div
       class="absolute w-full h-full overflow-hidden transition-opacity duration-[250ms] ease-out mix-blend-overlay"
       style="
