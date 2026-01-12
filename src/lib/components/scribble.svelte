@@ -120,7 +120,7 @@
   let activeTool: 'draw' | 'erase' = $state('draw');
 
   // Available colors and sizes
-  const colors = ['#000000', '#FF6B6B', '#69DB7C', '#4DABF7', '#CC5DE8'];
+  const colors = ['#000000', '#FF6B6B', '#69DB7C', '#00068E', '#CC5DE8'];
   const sizes = [2, 5, 8, 12, 16];
 
   let eraserStroke: { points: [number, number, number][] } | undefined = $state();

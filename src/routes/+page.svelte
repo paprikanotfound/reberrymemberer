@@ -4,9 +4,9 @@
 </script>
 
 <div class="w-full min-h-full px-3 pb-3 flex flex-col">
-  <section class="relative h-[100dvh] flex flex-col justify-center items-center">
+  <section class="relative min-h-[100dvh] flex flex-col justify-center items-center">
     <img 
-      class="select-none object-cover h-40 sm:h-72 sm:-translate-x-10 postcard-shadow" 
+      class="select-none object-cover h-40 md:h-80 sm:-translate-x-10 postcard-shadow" 
       loading="eager"
       src="./examples/front1.jpg" alt="" 
     />
@@ -16,9 +16,9 @@
       <span class="max-sm:hidden inline-block"><a href="/write">Send</a>.</span>
     </span>
     <img 
-      class="select-none object-cover h-40 sm:h-72 sm:translate-x-10 postcard-shadow" 
+      class="select-none object-cover h-40 md:h-80 sm:translate-x-10 postcard-shadow" 
       loading="eager"
-      src="./examples/back3.jpg" alt="" 
+      src="./examples/page_back1.jpg" alt="" 
     />
     <div class="fixed bottom-2 right-2 text-6xl sm:hidden">
       <a class="hover:italic decoration-solid" href="/write">Send</a>
