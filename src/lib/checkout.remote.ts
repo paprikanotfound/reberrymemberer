@@ -22,16 +22,17 @@ async function createStripeCheckoutSession(secret: string, origin: string, clien
     line_items: [
       {
         price_data: {
-          currency: 'eur',
-          product_data: {
-            name: 'A6 Postcard',
-            description: 'Reberrymemberer Postal Services.'
-          },
+          currency: POSTCARD_CONFIG.cost_currency,
           unit_amount: POSTCARD_CONFIG.cost_unit,
+          product_data: {
+            name: '4 x 6 Postcard',
+            description: 'Reberrymemberer worldwide postal services.'
+          },
         },
         quantity: 1,
       },
     ],
+    customer_email: 'test+location_KR@example.com',
     mode: 'payment',
     success_url: new URL(ROUTES.return, origin).href,
     cancel_url: new URL(ROUTES.send, origin).href,
@@ -50,7 +51,7 @@ async function mockVerifyAddress(postal: PostalClient, addressTo: LobAddress) {
     // Available test values from postal.testAddresses
     address_line1: isUS ? 
       postal.testAddresses.us.deliverable : 
-      postal.testAddresses.intl.undeliverable,
+      postal.testAddresses.intl.deliverable,
   };
 
   console.log(`[DEV MODE] Testing address verification with: ${testAddress.address_line1}`);
@@ -178,7 +179,7 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
       id: clientRefId,
       stripe_checkout_id: session.id,
       recipient_address: JSON.stringify(addressTo),
-      send_date: request.sendDate,
+      send_date: request.sendDate ?? null,
       front_image_url: keyFront,
       back_image_url: keyBack,
       status: 'draft',

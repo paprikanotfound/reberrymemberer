@@ -34,7 +34,6 @@
         <div>
           <p class="italic">How much does it cost?</p>
           <p>{POSTCARD_CONFIG.cost_label}</p>
-          <p class="text-sm"><i>Prices are shown in your local currency at checkout.</i></p>
         </div>
         <hr>
         <div>

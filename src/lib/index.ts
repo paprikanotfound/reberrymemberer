@@ -2,8 +2,9 @@
 export { createPersistedScribble, clearPersistedScribble, type PersistedScribble, type ScribbleContent } from './components/scribble-state.svelte';
 
 export const POSTCARD_CONFIG = {
-  cost_label: "Each postcard costs $3.",
-  cost_unit: 300,
+  cost_label: "Each postcard costs 2.60 € (approx. $3 USD).",
+  cost_unit: 260,
+  cost_currency: "eur",
   type: "image/jpeg",
   dimensions_label: "4x6 inches (10.16 x 15.24 cm)",
   // At 300 DPI
