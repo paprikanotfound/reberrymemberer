@@ -11,7 +11,7 @@ export function initDB(db: D1Database) {
         front_image_url, 
         back_image_url, 
         status
-      }: Omit<Order, "stripe_payment_intent"|"sender_address"|"provider_order_id"|"reason"|"created_at"|"customer_email">) => {
+      }: Omit<Order, "stripe_payment_intent"|"provider_order_id"|"reason"|"updated_at"|"created_at"|"customer_email">) => {
         return db.prepare(`
           INSERT INTO orders (
             id, 
@@ -21,8 +21,9 @@ export function initDB(db: D1Database) {
             front_image_url, 
             back_image_url, 
             status, 
+            updated_at,
             created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_DATE)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%s', 'now'), strftime('%s', 'now'))
           RETURNING *;
         `)
         .bind(id, stripe_checkout_id, recipient_address, send_date, front_image_url, back_image_url, status)
@@ -36,29 +37,53 @@ export function initDB(db: D1Database) {
       ) => { 
         return db.prepare(`
           UPDATE orders 
-          SET status = ?, customer_email = ?, stripe_payment_intent = ?
-          WHERE id = ? AND status != 'paid'
+          SET 
+            status = ?, 
+            customer_email = ?, 
+            stripe_payment_intent = ?,
+            updated_at = strftime('%s', 'now')
+          WHERE id = ? 
+            AND status != 'paid'
           RETURNING *;
         `)
         .bind('paid', email, paymentIntent, orderId)
         .first<Order>();
       },
-      setOrderAsConfirmedWithProviderId: ({ provider_order_id, order_id }: {
+      updateOrderAsConfirmed: ({ 
+        customer_email, 
+        provider_order_id,
+        order_id,
+      }: {
+        customer_email: Order['customer_email'], 
         provider_order_id: Order['provider_order_id'], 
         order_id: Order['id'],
       }) => {
         return db.prepare(`
           UPDATE orders 
-          SET status = ?, provider_order_id = ?, recipient_address = ?, sender_address = ?
+          SET 
+            status = ?, 
+            customer_email = ?, 
+            provider_order_id = ?, 
+            recipient_address = ?, 
+            updated_at = strftime('%s', 'now')
           WHERE id = ?;
         `)
-        .bind(<Order['status']> 'confirmed', provider_order_id, null, null, order_id)
+        .bind(
+          <Order['status']> 'confirmed', 
+          customer_email,
+          provider_order_id, 
+          null, 
+          order_id,
+        )
         .run();
       },
       setOrderFailedPayment: ({ orderId }: { orderId: Order['id'] }) => {
         return db.prepare(`
           UPDATE orders 
-          SET status = ?, reason = ?
+          SET 
+            status = ?, 
+            reason = ?,
+            updated_at = strftime('%s', 'now')
           WHERE id = ?;
         `)
         .bind(<Order['status']> 'cancelled', <Order['reason']> 'payment_fail', orderId)
@@ -67,28 +92,53 @@ export function initDB(db: D1Database) {
       setOrderCancelled: ({ orderId, reason }: { orderId: Order['id'], reason: Order['reason'] }) => {
         return db.prepare(`
           UPDATE orders 
-          SET status = ?, reason = ?
+          SET 
+            status = ?, 
+            reason = ?,
+            updated_at = strftime('%s', 'now')
           WHERE id = ?;
         `)
-        .bind(<Order['status']> 'cancelled', reason, orderId)
+        .bind(
+          <Order['status']> 'cancelled', 
+          reason, 
+          orderId,
+        )
         .run();
       },
       setOrderCancelledFraud: ({ paymentIntent }: { paymentIntent: Order['stripe_payment_intent'] }) => {
         return db.prepare(`
           UPDATE orders 
-          SET status = ?, reason = ?, recipient_address = ?, sender_address = ?
-          WHERE stripe_payment_intent = ?;
+          SET 
+            status = ?, 
+            reason = ?, 
+            recipient_address = ?, 
+            updated_at = strftime('%s', 'now')
+          WHERE 
+            stripe_payment_intent = ?;
         `)
-        .bind(<Order['status']> 'cancelled', <Order['reason']> 'fraud_detected', null, null, paymentIntent)
+        .bind(
+          <Order['status']> 'cancelled', 
+          <Order['reason']> 'fraud_detected', 
+          null, 
+          paymentIntent,
+        )
         .run();
       },
       setOrderAsExpired: ({ orderId }: { orderId: Order['id'] }) => {
         return db.prepare(`
           UPDATE orders 
-          SET status = ?, recipient_address = ?, sender_address = ?
+          SET 
+            status = ?, 
+            recipient_address = ?, 
+            updated_at = strftime('%s', 'now')
           WHERE id = ?;
         `)
-        .bind(<Order['status']> 'cancelled', null, null, orderId)
+        .bind(
+          <Order['status']> 'cancelled', 
+          null, 
+          null, 
+          orderId,
+        )
         .run();
       },
     }
@@ -101,16 +151,20 @@ export type DBClient = ReturnType<typeof initDB>;
 
 export type Order = {
   id: string;
-  stripe_checkout_id: string | null;
+
+  stripe_checkout_id: string;
   stripe_payment_intent: string | null;
   provider_order_id: string | null;
   customer_email: string | null;
-  recipient_address: string; // encrypted JSON string
-  sender_address: string | null;
+
+  recipient_address: string;
   send_date: string | null;
   front_image_url: string;
   back_image_url: string;
+  
   reason?: 'system_error' | 'payment_fail' | 'fraud_detected';
   status: 'draft' | 'paid' | 'confirmed'  | 'sent' | 'cancelled';
-  created_at?: string; // ISO timestamp, optional on insert
+
+  updated_at: number;
+  created_at: number;
 };

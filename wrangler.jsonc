@@ -31,11 +31,11 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "reberrymemberer",
+			"database_name": "reberry",
 			"database_id": "265a3491-db14-4e80-8ed3-ce103ac56955",
 			"remote": true,
-			"preview_database_id": "03a4fe04-b669-4ecb-b140-d21855c0b84d",
-		},
+			"preview_database_id": "a95827a5-7d50-45e1-a619-a6f1a0eb781c",
+		}
 	],
 	"r2_buckets": [
 		{

@@ -9,7 +9,7 @@
 	import { initForm } from "$lib/utils/forms.svelte";
 	import { loadImage } from "$lib/utils/images";
 	import { uploadContent } from "$lib/utils/upload";
-  import { onMount, tick, untrack } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   let redirectingToCheckout = $state(false);
   let penMode = $state(false);

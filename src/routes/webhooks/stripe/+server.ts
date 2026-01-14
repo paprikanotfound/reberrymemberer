@@ -11,14 +11,26 @@ async function fulfillOrder(
   session: Stripe.Response<Stripe.Checkout.Session>,
   platform: Readonly<App.Platform>,
 ) {
-  
+
   // TODO: handle different quantities & item types
 
   const db = initDB(platform!.env.DB);
   const sessionOrderId = session.client_reference_id;
-  const email = session.customer_email;
+  const customerEmail = session.customer_details?.email;
 
-  if (!sessionOrderId) error(401, "Missing client_reference_id!");
+  console.log('[fulfillOrder] Started', {
+    orderId: sessionOrderId,
+    sessionId: session.id,
+    email: customerEmail,
+    paymentStatus: session.payment_status
+  });
+
+  if (!sessionOrderId) {
+    console.error('[fulfillOrder] Missing client_reference_id', { sessionId: session.id });
+    error(401, "Missing client_reference_id!");
+  }
+
+  console.log('[fulfillOrder] Marking order as paid', { orderId: sessionOrderId })
 
   // Retrieve unpaid order and update status.
   const order = await tryWhile(
@@ -26,11 +38,16 @@ async function fulfillOrder(
       orderId: sessionOrderId,
       email: session.customer_email,
       paymentIntent: session.payment_intent!.toString(),
-    }), 
+    }),
     isErrorRetryableD1
   );
 
-  if (!order) error(401, "Order has been fullfilled or not found!" + sessionOrderId);
+  if (!order) {
+    console.error('[fulfillOrder] Order not found or already fulfilled', { orderId: sessionOrderId });
+    error(401, "Order has been fullfilled or not found!" + sessionOrderId);
+  }
+
+  console.log('[fulfillOrder] Order marked as paid', { orderId: sessionOrderId });
 
   try {
 
@@ -43,53 +60,84 @@ async function fulfillOrder(
       back: `${platform!.env.R2_DELIVER_URL}/${order.back_image_url}`,
       metadata: {
         order_id: order.id,
+        customer_email: customerEmail ?? 'missing',
       },
       size: "4x6", // Note: This is the only size supported internationally.
       mail_type: 'usps_first_class',
       use_type: 'operational',
       // send_date: order.send_date ?? undefined, // Note: Requires Pro Plan
     }
-    
+
+    console.log('[fulfillOrder] Creating postcard with Lob', {
+      orderId: order.id,
+      recipient: recipientAddress.name,
+      destination: recipientAddress.address_country
+    });
+
     const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
     const resp = await lob.createNewOrder(payload);
+
     if (!resp.ok) {
-      console.error(resp)
+      console.error('[fulfillOrder] Lob API error', {
+        orderId: order.id,
+        status: resp.status,
+        statusText: resp.statusText
+      });
       error(401, "Invalid postcard response!");
     }
 
-    const respContent: PostcardResponse = await resp.json()
+    const respContent: PostcardResponse = await resp.json();
+
+    console.log('[fulfillOrder] Postcard created successfully', {
+      orderId: order.id,
+      providerOrderId: respContent.id
+    });
 
     // Update client order status & id
     await tryWhile(
-      () => db.order.setOrderAsConfirmedWithProviderId({
+      () => db.order.updateOrderAsConfirmed({
+        customer_email: customerEmail ?? null,
         provider_order_id: respContent.id,
         order_id: order.id
-      }), 
+      }),
       isErrorRetryableD1
     );
-    
+
+    console.log('[fulfillOrder] Order confirmed in database', { orderId: order.id });
+
+    if (customerEmail) {
+      console.log('[fulfillOrder] Processing user registration and email', { email: customerEmail, orderId: order.id });
+
+      // Automatically sign-up new users
+      const lucia = initLucia(platform.env.DB);
+      await tryWhile(
+        () => lucia.auth.registerUser(customerEmail),
+        isErrorRetryableD1
+      );
+
+      // Send confirmation email
+      const resend = initResend(platform.env.RESEND_API);
+      await tryWhile(
+        () => resend.sendConfirmationEmail(customerEmail, order.id.slice(0, 13)), // keeping order ids short
+        isErrorRetryableResend
+      );
+
+      console.log('[fulfillOrder] Email sent successfully', { email: customerEmail, orderId: order.id });
+    }
+
+    console.log('[fulfillOrder] Completed successfully', { orderId: order.id });
+
   } catch (error) {
-    console.error(error);
+    console.error('[fulfillOrder] Error occurred, cancelling order', {
+      orderId: sessionOrderId,
+      error: error instanceof Error ? error.message : String(error)
+    });
 
     await tryWhile(
-      () => db.order.setOrderCancelled({ orderId: sessionOrderId, reason: "system_error" }), 
+      () => db.order.setOrderCancelled({ orderId: sessionOrderId, reason: "system_error" }),
       isErrorRetryableD1
     );
-  }
-
-  if (email) {
-    // Automatically sign-up new users
-    const lucia = initLucia(platform.env.DB);
-    await tryWhile(
-      () => lucia.auth.registerUser(email), 
-      isErrorRetryableD1
-    );
-    // Send confirmation email
-    const resend = initResend(platform.env.RESEND_API);
-    await tryWhile(
-      () => resend.sendConfirmationEmail(email, order.id.slice(0, 13)), // keeping order ids short 
-      isErrorRetryableResend
-    );
+    return
   }
 }
 
@@ -151,7 +199,12 @@ export async function POST({ platform, request }) {
   const signature = request.headers.get('stripe-signature');
   const event = await stripe.webhooks.constructEventAsync(rawBody, signature!, stripeSignSecret);
 
-  if (!event) return error(500, "Unauthorized request");
+  if (!event) {
+    console.error('[webhook] Failed to construct event - unauthorized request');
+    return error(500, "Unauthorized request");
+  }
+
+  console.log('[webhook] Received event', { type: event.type, id: event.id });
 
   const webhook = stripeWebhookHandler(stripe, platform!);
   try {
@@ -181,7 +234,13 @@ export async function POST({ platform, request }) {
         break
       }
     }
+    console.log('[webhook] Event processed successfully', { type: event.type, id: event.id });
   } catch (err) {
+    console.error('[webhook] Error processing event', {
+      type: event.type,
+      id: event.id,
+      error: err instanceof Error ? err.message : String(err)
+    });
     error(500, { message: JSON.stringify(err ?? 'Error handling stripe webhook') });
   }
 

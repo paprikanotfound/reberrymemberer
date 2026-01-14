@@ -154,7 +154,7 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
     invalid(message);
   }
   
-  console.log("Creating checkout session...");
+  console.log("[createCheckout] Creating checkout session");
 
   // Create a Stripe session
   const session = await createStripeCheckoutSession(
@@ -166,7 +166,7 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
 
   if (!session.url) error(500, 'Unable to create checkout session. Please try again.')
 
-  console.log("Generating signed URLs...");
+  console.log("[createCheckout] Generating signed URLs");
 
   // Generate R2 keys for postcard page images
   const keyFront = BUCKET_PATHS.uploadCheckoutAssetPath(`${clientRefId}_front.jpg`, devEnv);
@@ -182,7 +182,7 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
   const frontUploadUrl = await s3.getSignedUrl(keyFront, "put", "image/jpeg", 60 * 10);
   const backUploadUrl = await s3.getSignedUrl(keyBack, "put", "image/jpeg", 60 * 10);
 
-  console.log("Creating draft order...")
+  console.log("[createCheckout] Creating draft order")
 
   // Create new order
   const db = initDB(platform!.env.DB);
@@ -191,9 +191,9 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
       id: clientRefId,
       stripe_checkout_id: session.id,
       recipient_address: JSON.stringify(addressTo),
-      send_date: request.sendDate ?? null,
       front_image_url: keyFront,
       back_image_url: keyBack,
+      send_date: null, // request.sendDate 
       status: 'draft',
     }),
     isErrorRetryableD1,
