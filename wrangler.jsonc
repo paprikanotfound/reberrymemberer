@@ -54,7 +54,7 @@
 	 */
 	"vars": { 
 		"ENV": "production", 
-		"DEFAULT_SEND_ADR_ID": "adr_55fcc564ac7db7a3", 
+		"DEFAULT_SEND_ADR_ID": "adr_19d84e1fa7a7b715", 
 	},
 	/**
 	 * Service Bindings (communicate between multiple Workers)
