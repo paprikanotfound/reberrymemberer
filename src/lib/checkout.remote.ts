@@ -16,28 +16,29 @@ const BUCKET_PATHS = {
   uploadCheckoutAssetPath: (filename: string, isDevEnv: boolean) => `tmp/90/reberrymemberer/${isDevEnv ? "dev":"prod"}/${filename}`,
 }
 
-async function createStripeCheckoutSession(secret: string, origin: string, client_reference_id: string, expires_in: number) {
+async function createStripeCheckoutSession(
+  secret: string, 
+  origin: string, 
+  client_reference_id: string, 
+  expires_in: number,
+  is_international: boolean
+) {
   const stripe = new Stripe(secret, { apiVersion: "2025-06-30.basil" })
   const session = await stripe.checkout.sessions.create({
     client_reference_id,
     expires_at: Math.floor(Date.now() / 1000) + expires_in,
     line_items: [
       {
-        price_data: {
-          currency: POSTCARD_CONFIG.cost_currency,
-          unit_amount: POSTCARD_CONFIG.cost_unit,
-          product_data: {
-            name: '4 x 6 Postcard',
-            description: 'Reberrymemberer worldwide postal services.'
-          },
-        },
+        price_data: is_international ? 
+          POSTCARD_CONFIG.product_data.intl : 
+          POSTCARD_CONFIG.product_data.us,
         quantity: 1,
       },
     ],
-    // customer_email: 'test+location_KR@example.com',
     mode: 'payment',
     success_url: new URL(ROUTES.return, origin).href,
     cancel_url: new URL(ROUTES.send, origin).href,
+    // customer_email: 'test+location_KR@example.com',
   });
   return session
 }
@@ -162,6 +163,7 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
     url.origin,
     clientRefId,
     60 * 60 * 1,
+    request.country !== "US"
   );
 
   if (!session.url) error(500, 'Unable to create checkout session. Please try again.')
