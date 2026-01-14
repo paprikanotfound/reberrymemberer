@@ -9,34 +9,36 @@ import { initPostalClient, type LobAddress, type PostalClient } from "./server/l
 import { initS3 } from "./server/S3";
 
 // Constants
+const ADDRESS_VERIFICATION = false;
 const BUCKET_PATHS = {
   // Delete objects after 90 day(s): "tmp/90/*"
   // To allow time for customer support issues.
   uploadCheckoutAssetPath: (filename: string, isDevEnv: boolean) => `tmp/90/reberrymemberer/${isDevEnv ? "dev":"prod"}/${filename}`,
 }
 
-async function createStripeCheckoutSession(secret: string, origin: string, client_reference_id: string, expires_in: number) {
+async function createStripeCheckoutSession(
+  secret: string, 
+  origin: string, 
+  client_reference_id: string, 
+  expires_in: number,
+  is_international: boolean
+) {
   const stripe = new Stripe(secret, { apiVersion: "2025-06-30.basil" })
   const session = await stripe.checkout.sessions.create({
     client_reference_id,
     expires_at: Math.floor(Date.now() / 1000) + expires_in,
     line_items: [
       {
-        price_data: {
-          currency: POSTCARD_CONFIG.cost_currency,
-          unit_amount: POSTCARD_CONFIG.cost_unit,
-          product_data: {
-            name: '4 x 6 Postcard',
-            description: 'Reberrymemberer worldwide postal services.'
-          },
-        },
+        price_data: is_international ? 
+          POSTCARD_CONFIG.product_data.intl : 
+          POSTCARD_CONFIG.product_data.us,
         quantity: 1,
       },
     ],
-    // customer_email: 'test+location_KR@example.com',
     mode: 'payment',
     success_url: new URL(ROUTES.return, origin).href,
     cancel_url: new URL(ROUTES.send, origin).href,
+    // customer_email: 'test+location_KR@example.com',
   });
   return session
 }
@@ -135,11 +137,13 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
 
   // Address verification: Requires a live key.
   try {
-    const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
-    if (devEnv) {
-      await mockVerifyAddress(lob, addressTo);
-    } else {
-      await verifyAddress(lob, addressTo);
+    if (ADDRESS_VERIFICATION) {
+      const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
+      if (devEnv) {
+        await mockVerifyAddress(lob, addressTo);
+      } else {
+        await verifyAddress(lob, addressTo);
+      }
     }
   } catch (err) {
     // Type-safely extract the error message
@@ -151,7 +155,7 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
     invalid(message);
   }
   
-  console.log("Creating checkout session...");
+  console.log("[createCheckout] Creating checkout session");
 
   // Create a Stripe session
   const session = await createStripeCheckoutSession(
@@ -159,11 +163,12 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
     url.origin,
     clientRefId,
     60 * 60 * 1,
+    request.country !== "US"
   );
 
   if (!session.url) error(500, 'Unable to create checkout session. Please try again.')
 
-  console.log("Generating signed URLs...");
+  console.log("[createCheckout] Generating signed URLs");
 
   // Generate R2 keys for postcard page images
   const keyFront = BUCKET_PATHS.uploadCheckoutAssetPath(`${clientRefId}_front.jpg`, devEnv);
@@ -179,7 +184,7 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
   const frontUploadUrl = await s3.getSignedUrl(keyFront, "put", "image/jpeg", 60 * 10);
   const backUploadUrl = await s3.getSignedUrl(keyBack, "put", "image/jpeg", 60 * 10);
 
-  console.log("Creating draft order...")
+  console.log("[createCheckout] Creating draft order")
 
   // Create new order
   const db = initDB(platform!.env.DB);
@@ -188,15 +193,17 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
       id: clientRefId,
       stripe_checkout_id: session.id,
       recipient_address: JSON.stringify(addressTo),
-      send_date: request.sendDate ?? null,
       front_image_url: keyFront,
       back_image_url: keyBack,
+      send_date: null, // request.sendDate 
       status: 'draft',
     }),
     isErrorRetryableD1,
   );
 
   if (!resp) error(500, 'Unable to process your order. Please try again.');
+  
+  console.log(resp)
 
   // Return upload URLs and checkout URL for client-side handling
   // redirect(301, session.url);

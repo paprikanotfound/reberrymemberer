@@ -6,10 +6,10 @@ CREATE TABLE user (
     id TEXT PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
     email_verified BOOLEAN DEFAULT 0,
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
-);
 
+    updated_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL
+);
 CREATE TABLE session (
     id TEXT NOT NULL PRIMARY KEY,
     expires_at INTEGER NOT NULL,
@@ -39,16 +39,20 @@ CREATE TABLE otp_attempts (
 
 CREATE TABLE orders (
   id TEXT PRIMARY KEY,
+
   stripe_checkout_id TEXT NOT NULL,
   stripe_payment_intent TEXT,
   provider_order_id TEXT,
   customer_email TEXT,
+
   send_date TEXT,
-  sender_address TEXT,
-  recipient_address TEXT NOT NULL,
+  recipient_address TEXT,
   front_image_url TEXT NOT NULL,
   back_image_url TEXT NOT NULL,
-  status TEXT DEFAULT 'draft',
+
+  status TEXT NOT NULL,
   reason TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+  updated_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
 );

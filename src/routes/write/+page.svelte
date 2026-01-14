@@ -9,7 +9,7 @@
 	import { initForm } from "$lib/utils/forms.svelte";
 	import { loadImage } from "$lib/utils/images";
 	import { uploadContent } from "$lib/utils/upload";
-  import { onMount, tick, untrack } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   let redirectingToCheckout = $state(false);
   let penMode = $state(false);
@@ -43,15 +43,15 @@
     return new Promise<Blob>(async (res, rej) => {
       const canvas = document.createElement("canvas");
       // Export with bleed dimensions
-      canvas.width = POSTCARD_CONFIG.bleed.w;
-      canvas.height = POSTCARD_CONFIG.bleed.h;
+      canvas.width = POSTCARD_CONFIG.printing.bleed.w;
+      canvas.height = POSTCARD_CONFIG.printing.bleed.h;
 
       const ctx = canvas.getContext("2d");
       if (!ctx) return rej("No 2D context");
 
       // Calculate bleed offset (centered)
-      const offsetX = (POSTCARD_CONFIG.bleed.w - POSTCARD_CONFIG.trim.w) / 2;
-      const offsetY = (POSTCARD_CONFIG.bleed.h - POSTCARD_CONFIG.trim.h) / 2;
+      const offsetX = (POSTCARD_CONFIG.printing.bleed.w - POSTCARD_CONFIG.printing.trim.w) / 2;
+      const offsetY = (POSTCARD_CONFIG.printing.bleed.h - POSTCARD_CONFIG.printing.trim.h) / 2;
 
       // Fill background
       ctx.fillStyle = bgColor ? bgColor : "#FFFFFF";
@@ -67,7 +67,7 @@
         try {
           const elmImage = await loadImage(base64ToBlob(content.backgroundImage));
           if (elmImage) {
-            drawObjectCover(ctx, elmImage, POSTCARD_CONFIG.trim.w, POSTCARD_CONFIG.trim.h, 0.5);
+            drawObjectCover(ctx, elmImage, POSTCARD_CONFIG.printing.trim.w, POSTCARD_CONFIG.printing.trim.h, 0.5);
           }
         } catch (e) {
           console.error("Failed to load background image:", e);
@@ -75,7 +75,7 @@
       }
 
       // Draw strokes (coordinates are in trim space)
-      drawStokes(ctx, POSTCARD_CONFIG.trim.w, POSTCARD_CONFIG.trim.h, content.strokes);
+      drawStokes(ctx, POSTCARD_CONFIG.printing.trim.w, POSTCARD_CONFIG.printing.trim.h, content.strokes);
 
       // Restore context
       ctx.restore();
@@ -141,16 +141,16 @@
       <span>001</span>
       <span>Front Page</span>
     </div>
-    <div class="w-full" style="aspect-ratio: {POSTCARD_CONFIG.trim.w/POSTCARD_CONFIG.trim.h};">
+    <div class="w-full" style="aspect-ratio: {POSTCARD_CONFIG.printing.trim.w/POSTCARD_CONFIG.printing.trim.h};">
       <Scribble
         class="w-full h-full"
         showBackgroundSelector={true}
         showSafeZone={true}
-        safeZoneWidth={POSTCARD_CONFIG.safe.w}
-        safeZoneHeight={POSTCARD_CONFIG.safe.h}
-        targetWidth={POSTCARD_CONFIG.trim.w}
-        targetHeight={POSTCARD_CONFIG.trim.h}
-        backgroundColor={POSTCARD_CONFIG.front_background}
+        safeZoneWidth={POSTCARD_CONFIG.printing.safe.w}
+        safeZoneHeight={POSTCARD_CONFIG.printing.safe.h}
+        targetWidth={POSTCARD_CONFIG.printing.trim.w}
+        targetHeight={POSTCARD_CONFIG.printing.trim.h}
+        backgroundColor={POSTCARD_CONFIG.printing.front_background}
         bind:strokes={scribbleFront.content.strokes}
         bind:color={scribbleFront.content.color}
         bind:size={scribbleFront.content.size}
@@ -169,19 +169,19 @@
       <span>002</span>
       <span>Back Page</span>
     </div>
-    <div class="w-full" style="aspect-ratio: {POSTCARD_CONFIG.trim.w/POSTCARD_CONFIG.trim.h};">
+    <div class="w-full" style="aspect-ratio: {POSTCARD_CONFIG.printing.trim.w/POSTCARD_CONFIG.printing.trim.h};">
       <Scribble
         class="w-full h-full"
         showSafeZone={true}
-        safeZoneWidth={POSTCARD_CONFIG.safe.w}
-        safeZoneHeight={POSTCARD_CONFIG.safe.h}
+        safeZoneWidth={POSTCARD_CONFIG.printing.safe.w}
+        safeZoneHeight={POSTCARD_CONFIG.printing.safe.h}
         showInkFreeArea={true}
-        inkFreeWidth={POSTCARD_CONFIG.inkFree.w}
-        inkFreeHeight={POSTCARD_CONFIG.inkFree.h}
-        inkFreeOffsetRight={POSTCARD_CONFIG.inkFree.offsetRight}
-        inkFreeOffsetBottom={POSTCARD_CONFIG.inkFree.offsetBottom}
-        targetWidth={POSTCARD_CONFIG.trim.w}
-        targetHeight={POSTCARD_CONFIG.trim.h}
+        inkFreeWidth={POSTCARD_CONFIG.printing.inkFree.w}
+        inkFreeHeight={POSTCARD_CONFIG.printing.inkFree.h}
+        inkFreeOffsetRight={POSTCARD_CONFIG.printing.inkFree.offsetRight}
+        inkFreeOffsetBottom={POSTCARD_CONFIG.printing.inkFree.offsetBottom}
+        targetWidth={POSTCARD_CONFIG.printing.trim.w}
+        targetHeight={POSTCARD_CONFIG.printing.trim.h}
         bind:strokes={scribbleBack.content.strokes}
         bind:color={scribbleBack.content.color}
         bind:size={scribbleBack.content.size}
@@ -208,7 +208,7 @@
         const { checkoutUrl, uploadUrls } = createCheckout.result;
 
         // Generate page images
-        const frontBlob = await createPageImage(scribbleFront.content, 'image/jpeg', 0.95, POSTCARD_CONFIG.front_background);
+        const frontBlob = await createPageImage(scribbleFront.content, 'image/jpeg', 0.95, POSTCARD_CONFIG.printing.front_background);
         const backBlob = await createPageImage(scribbleBack.content, 'image/jpeg', 0.95);
 
         // Upload images to R2 using multipart upload
