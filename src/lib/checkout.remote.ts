@@ -9,6 +9,7 @@ import { initPostalClient, type LobAddress, type PostalClient } from "./server/l
 import { initS3 } from "./server/S3";
 
 // Constants
+const ADDRESS_VERIFICATION = false;
 const BUCKET_PATHS = {
   // Delete objects after 90 day(s): "tmp/90/*"
   // To allow time for customer support issues.
@@ -135,11 +136,13 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
 
   // Address verification: Requires a live key.
   try {
-    const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
-    if (devEnv) {
-      await mockVerifyAddress(lob, addressTo);
-    } else {
-      await verifyAddress(lob, addressTo);
+    if (ADDRESS_VERIFICATION) {
+      const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
+      if (devEnv) {
+        await mockVerifyAddress(lob, addressTo);
+      } else {
+        await verifyAddress(lob, addressTo);
+      }
     }
   } catch (err) {
     // Type-safely extract the error message
@@ -197,6 +200,8 @@ export const createCheckout = form(CheckoutSchema, async (request, issue) => {
   );
 
   if (!resp) error(500, 'Unable to process your order. Please try again.');
+  
+  console.log(resp)
 
   // Return upload URLs and checkout URL for client-side handling
   // redirect(301, session.url);
