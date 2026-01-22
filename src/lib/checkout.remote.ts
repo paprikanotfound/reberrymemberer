@@ -119,7 +119,6 @@ async function verifyAddress(postal: PostalClient, addressTo: LobAddress) {
   }
 }
 
-
 export const createCheckout = form(CheckoutSchema, async (request, issue) => {
   const { platform, url } = getRequestEvent();
   const devEnv = platform!.env.ENV == "dev";

@@ -10,6 +10,8 @@ declare global {
                 DB: D1Database;
                 ENV: "prod"|"dev";
                 DEFAULT_SEND_ADR_ID: string;
+                
+                ENCRYPTION_KEY: string;
                 RESEND_API: string;
                 LOB_API_PUB: string;
                 LOB_API_SECRET: string;

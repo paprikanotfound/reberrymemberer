@@ -63,11 +63,36 @@ export function initResend(apiKey: string) {
         Paprika @ reberrymemeber
       `);
       const subject = 'Sign-in to Reberrymemberer';
-      return resend.emails.send({ 
-        from: POSTCARD_CONFIG.support_email, 
-        to: emailTo, 
-        subject: subject, 
-        text: plainText 
+      return resend.emails.send({
+        from: POSTCARD_CONFIG.support_email,
+        to: emailTo,
+        subject: subject,
+        text: plainText
+      });
+    },
+    sendFriendInvitation: async (emailTo: string, senderEmail: string, inviteUrl: string) => {
+      const plainText = dedent(`
+        Hi,
+
+        ${senderEmail} has invited you to be friends on Reberrymemberer!
+
+        Being friends allows you to send postcards to each other without sharing your full addresses. Only your name and country will be visible.
+
+        Click this link to accept the invitation: ${inviteUrl}
+
+        This link will expire in 7 days.
+
+        If you need help, contact ${POSTCARD_CONFIG.support_email}
+
+        Best,
+        Paprika @ reberrymemberer.com
+      `);
+      const subject = `${senderEmail} invited you to be friends on Reberrymemberer`;
+      return resend.emails.send({
+        from: POSTCARD_CONFIG.support_email,
+        to: emailTo,
+        subject: subject,
+        text: plainText
       });
     }
   }

@@ -3,10 +3,9 @@
 	import { resendOTP, signInWithOTP, signOut, verifyOTP } from "$lib/auth.remote";
 	import { initForm } from "$lib/utils/forms.svelte";
 	import { onMount, untrack } from "svelte";
-	import type { PageProps } from "./$types";
 
-  let { data }: PageProps = $props();
-  
+  let { data } = $props();
+
   let view = $derived(page.url.searchParams.get("view") as "otp" | null)
   let currentEmail: string|null = $derived(page.url.searchParams.get("email"));
   let isResendCodeAllowed = $state(false);
@@ -40,14 +39,13 @@
 			initForm(signInWithOTP, () => ({ email: currentEmail }));
 		}
 	});
+
 </script>
 
 <div class="p-4 flex flex-col gap-4">
   <div class="flex flex-col gap-4">
     <span>(<a href="/">Back</a>)</span>
-    <span>✉︎ Address Book → Add people to your address book to send postcards without having to type their address.</span>
   </div>
-
   {#if data.user}
     <form {...signOut}>
       <button class="primary flex gap-1">
@@ -57,25 +55,6 @@
         <span>Sign-out</span>
       </button>
     </form>
-
-    <div id="" class="w-full flex flex-col gap-6 md:grid  md:grid-cols-2 mb-4">
-      <div class="flex gap-4">
-        <span>001</span>
-        <span>Profile</span>
-      </div>
-    </div>
-    <div id="" class="w-full flex flex-col gap-6 md:grid  md:grid-cols-2 mb-4">
-      <div class="flex gap-4">
-        <span>002</span>
-        <span>Address Book</span>
-      </div>
-    </div>
-    <div id="" class="w-full flex flex-col gap-6 md:grid  md:grid-cols-2 mb-4">
-      <div class="flex gap-4">
-        <span>003</span>
-        <span>Contacts</span>
-      </div>
-    </div>
   {:else}
     {#if view == "otp"}
       <div class="flex flex-col gap-2">
@@ -83,7 +62,7 @@
           <p>Check your email — We just sent a code to <span class="underline">{currentEmail ? currentEmail : "your inbox"}</span>.</p>
           <p>Please enter the code in the email to sign in.</p>
         </div>
-  
+
         <form {...verifyOTP} class="flex flex-col items-start gap-1">
           <input hidden {...verifyOTP.fields.email.as("email")} bind:value={currentEmail} />
           <input {...verifyOTP.fields.code.as("text")} placeholder="Enter code" class="" />
@@ -99,12 +78,11 @@
             <span>Continue</span>
           </button>
         </form>
-  
-        <div class="mt-2 flex flex-col italic">
-          <p>Didn't receive the code?</p> 
-  
+
+        <div class="mt-2 flex flex-col italic text-sm">
+          <p>Didn't receive the code?</p>
           {#if isResendCodeAllowed}
-            <form {...resendOTP.enhance(async ({submit}) => { 
+            <form {...resendOTP.enhance(async ({submit}) => {
               await submit();
               resetResendOTPCountdown();
             })} class="flex flex-col items-start">
@@ -119,7 +97,7 @@
                   Sending...
                 {:else}
                   Resend email
-                {/if} 
+                {/if}
               </button>
             </form>
           {:else}
@@ -146,6 +124,6 @@
           <span>Continue</span>
         </button>
       </form>
-    {/if}	
+    {/if}
   {/if}
 </div>

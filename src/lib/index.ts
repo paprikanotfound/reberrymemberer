@@ -40,7 +40,7 @@ export const POSTCARD_CONFIG = {
 export const ROUTES = {
   send: '/write',
   return: '/return',
-  auth: '/return',
+  receive: '/receive',
   magic_link: '/mlink',
 }
 

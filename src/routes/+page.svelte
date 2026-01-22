@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { POSTCARD_CONFIG } from "$lib";
+	import { POSTCARD_CONFIG, ROUTES } from "$lib";
 </script>
 
 <div class="w-full min-h-full px-3 pb-3 flex flex-col">
@@ -10,9 +10,9 @@
       src="./examples/front1.jpg" alt="" 
     />
     <span class="z-20">
-      Reberrymemberer – A small postal experiment. An asynchronous communication network to keep in touch and for offline archival of memories. 
+      Reberrymemberer — A small postal experiment. An asynchronous communication network to keep in touch and for offline archival of memories. 
       It’s a tool for instant expression and calm delivery over time and distance. For selfish thoughts or shared memories.
-      <span class="max-sm:hidden inline-block"><a href="/write">Send</a>, <a href="/book">Contacts</a>.</span>
+      <span class="max-sm:hidden inline-block"><a href="{ROUTES.send}">Send</a>, <a href="{ROUTES.receive}">Receive</a>.</span>
     </span>
     <img 
       class="select-none object-cover h-40 md:h-90 postcard-shadow" 
@@ -20,7 +20,7 @@
       src="./examples/page_back2.jpg" alt="" 
     />
     <div class="fixed bottom-2 right-2 text-6xl sm:hidden">
-      <a class="hover:italic decoration-solid" href="/write">Send</a>
+      <a class="hover:italic decoration-solid" href="{ROUTES.send}">Send</a>
     </div>
   </section>
   <section class="flex flex-col gap-8">
@@ -56,20 +56,6 @@
       <div class="flex gap-8 mb-3">
         <span>Shipping & Returns</span>
       </div>
-      <!-- 
-      <div class="">
-        <p>
-          Postcards are printed in A6 format (10.5 × 14.8 cm / 4.1 × 5.8 inches) in the Netherlands.
-          Worldwide delivery via priority mail with PostNL – Dutch Postal Services.
-          (<a href="https://www.postnl.nl/api/assets/blt43aa441bfc1e29f2/blt6d6203f1afe9f9aa/68199ff00c47c367afd62823/20250501-brochure-international-delivery-times.pdf" target="_blank">Delivery times</a> →)
-        </p>
-        <br/>
-        <p>
-          Once a postcard is handed over to PostNL, delivery is outside our control. We cannot offer refunds or replacements
-          for incorrect or incomplete addresses, or for postcards that are delayed, lost, or returned. Please double-check
-          the address before sending.
-        </p>
-      </div> -->
       <div>
         <p class="mb-4">
           Postcards ship worldwide via USPS First-Class Mail.

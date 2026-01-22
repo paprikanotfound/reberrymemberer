@@ -12,6 +12,8 @@
 	import { uploadContent } from "$lib/utils/upload";
   import { onMount, untrack } from 'svelte';
 
+  let { data } = $props();
+
   let redirectingToCheckout = $state(false);
   let penMode = $state(false);
   
@@ -25,7 +27,13 @@
   initForm(createCheckout, () => {
     return {
       sendDate: today.toISOString().split('T')[0],
-      country: getCountryFromTimezone(),
+      country: data.prefillAddress ? data.prefillAddress.address_country : getCountryFromTimezone(),
+      name: data.prefillAddress ? data.prefillAddress.name : undefined,
+      address: data.prefillAddress ? data.prefillAddress.address_line1 : undefined,
+      addressLine2: data.prefillAddress ? data.prefillAddress.address_line2 : undefined,
+      postalCode: data.prefillAddress ? data.prefillAddress.address_zip : undefined,
+      state: data.prefillAddress ? data.prefillAddress.address_state : undefined,
+      city: data.prefillAddress ? data.prefillAddress.address_city : undefined,
     }
   });
   
@@ -40,6 +48,7 @@
 
   // Track if the selected country is US
   let isUSAddress = $derived(createCheckout.fields.country.value() === 'US');
+
   
   async function createPageImage(content: ScribbleContent, type?: string, quality?: number, bgColor?: string) {
     return new Promise<Blob>(async (res, rej) => {
@@ -102,6 +111,7 @@
       window.removeEventListener('pointerdown', handlePointerDown);
     };
   });
+
 </script>
 
 <!-- exit Pen mode -->
@@ -143,6 +153,7 @@
       <span>001</span>
       <span>Front Page</span>
     </div>
+    
     <div class="w-full" style="aspect-ratio: {POSTCARD_CONFIG.printing.trim.w/POSTCARD_CONFIG.printing.trim.h};">
       <Scribble
         class="w-full h-full"
@@ -171,6 +182,7 @@
       <span>002</span>
       <span>Back Page</span>
     </div>
+
     <div class="w-full" style="aspect-ratio: {POSTCARD_CONFIG.printing.trim.w/POSTCARD_CONFIG.printing.trim.h};">
       <Scribble
         class="w-full h-full"
@@ -226,11 +238,10 @@
         form.reset();
       }
     })} class="flex flex-col gap-6">
-
       <!-- <label>
         Send Date: <input {...createCheckout.fields.sendDate.as('date')} />
       </label> -->
-      
+
       <div id="address" class="flex flex-col gap-2">
         <label>
           Country*:
@@ -263,7 +274,6 @@
         </label>
 
         {#if isUSAddress}
-          <!-- US-specific fields (all required) -->
           <label>
             City*:
             <input {...createCheckout.fields.city.as('text')} maxlength="200" required />
@@ -290,7 +300,6 @@
             />
           </label>
         {:else}
-          <!-- International fields (optional or less strict) -->
           <label>
             City:
             <input {...createCheckout.fields.city.as('text')} />
