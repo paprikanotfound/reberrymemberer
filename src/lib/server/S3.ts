@@ -33,19 +33,13 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
  * const uploadUrl = await s3.getSignedUrl('path/to/file.jpg', 'put', 'image/jpeg', 3600);
  * ```
  */
-export const initS3 = (
-  {
-    endpoint,
-    accessKeyId,
-    secretAccessKey,
-    bucket,
-  }: {
-    endpoint: string;
-    accessKeyId: string;
-    secretAccessKey: string;
-    bucket: string;
-  }
-) => {
+export const initS3 = (options: {
+  endpoint: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  bucket: string;
+}) => {
+  const { endpoint, accessKeyId, secretAccessKey, bucket } = options;
   const s3 = new S3Client({
     region: "auto",
     endpoint: endpoint,
