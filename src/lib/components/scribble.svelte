@@ -64,6 +64,8 @@
     ...restProps
   }: Props = $props();
 
+  let strokesTest = $derived($state.snapshot(strokes))
+
   let elmBox: HTMLDivElement | undefined = $state();
   let elmInputBg: HTMLInputElement | undefined = $state();
   let elmBg: HTMLImageElement | undefined = $state();
@@ -132,7 +134,8 @@
 
   function handleStrokeComplete(stroke: Stroke) {
     if (activeTool === 'draw') {
-      strokes = [...strokes, stroke];
+      strokes ??= [];
+	    strokes.push(stroke);
     } else if (activeTool === 'erase' && erasedStrokeIndices.size > 0) {
       strokes = strokes.filter((_, i) => !erasedStrokeIndices.has(i));
       erasedStrokeIndices.clear();
@@ -467,10 +470,9 @@
         style="z-index: 0;"
       />
     {/if}
-
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {targetWidth} {targetHeight}" class="relative z-20 w-full h-full">
       <!-- Define turbulence filter -->
-      <defs>
+      <!-- <defs>
         <filter id="turbulence-filter">
           <feTurbulence
             type="fractalNoise"
@@ -495,12 +497,13 @@
             yChannelSelector="G"
           />
         </filter>
-      </defs>
-
-      {#each strokes as stroke, index}
+      </defs> 
+      filter={!isFullscreen && !isMobile.current ? "url(#turbulence-filter)" : undefined}
+      -->
+      {#each strokesTest as stroke, index (index)}
         {#if stroke.points.length}
           <path
-            d={getSvgPathFromStroke(stroke)}
+            d={getSvgPathFromStroke(stroke as Stroke)}
             fill={stroke.color}
             fill-opacity={erasedStrokeIndices.has(index) ? 0.3 : 1}
             stroke-linecap="round"
@@ -508,8 +511,6 @@
             stroke-width="0"
             stroke="transparent"
           />
-          <!-- remove turbulence animation due to performance issues -->
-          <!-- filter={!isFullscreen && !isMobile.current ? "url(#turbulence-filter)" : undefined} -->
         {/if}
       {/each}
       {#if activeStroke && activeStroke.points.length && activeTool === 'draw'}
