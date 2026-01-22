@@ -92,7 +92,7 @@ export const drawGesture: Action<HTMLElement, DrawGestureParams> = (node, params
         thinning: 0,
         smoothing: 1,
         streamline: 0,
-        easing: (t) => t,
+        easing: (t: number): number => t,
         simulatePressure: true,
         last: true
       },
