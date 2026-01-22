@@ -1,7 +1,7 @@
-
 export { createPersistedScribble, clearPersistedScribble, type PersistedScribble, type ScribbleContent } from './components/scribble-state.svelte';
 
 export const POSTCARD_CONFIG = {
+  support_email: "reberrymemberer@paprika.fyi",
   cost_label: "Each postcard costs $2 USD (2.60 € for international destinations).",
   dimensions_label: "4x6 inches (10.16 x 15.24 cm)",
   product_data: {
@@ -40,6 +40,8 @@ export const POSTCARD_CONFIG = {
 export const ROUTES = {
   send: '/write',
   return: '/return',
+  auth: '/return',
+  magic_link: '/mlink',
 }
 
 export const APP_CONFIG = {

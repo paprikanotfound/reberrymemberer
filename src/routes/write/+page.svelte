@@ -8,6 +8,7 @@
 	import { base64ToBlob } from "$lib/utils/files";
 	import { initForm } from "$lib/utils/forms.svelte";
 	import { loadImage } from "$lib/utils/images";
+	import { getCountryFromTimezone } from "$lib/utils/timezone";
 	import { uploadContent } from "$lib/utils/upload";
   import { onMount, untrack } from 'svelte';
 
@@ -18,14 +19,16 @@
   const scribbleFront = createPersistedScribble(APP_CONFIG.scribble.persist_front);
   const scribbleBack = createPersistedScribble(APP_CONFIG.scribble.persist_back);
 
-  // Set initial Send Date value
+  
+  // Set initial Send Date value and default country
   const today = new Date();
   initForm(createCheckout, () => {
     return {
       sendDate: today.toISOString().split('T')[0],
-      // country: 'KR', // TODO: Default to timezone
+      country: getCountryFromTimezone(),
     }
   });
+  
   // Force 'Send Date' >= today
   $effect(() => {
     const selected = createCheckout.fields.sendDate.value();
@@ -37,7 +40,6 @@
 
   // Track if the selected country is US
   let isUSAddress = $derived(createCheckout.fields.country.value() === 'US');
-  
   
   async function createPageImage(content: ScribbleContent, type?: string, quality?: number, bgColor?: string) {
     return new Promise<Blob>(async (res, rej) => {
@@ -201,7 +203,7 @@
       <span>Address & Details</span>
     </div>
 
-    <form {...createCheckout.preflight(CheckoutSchema).enhance(async ({submit,form}) => {
+    <form {...createCheckout.preflight(CheckoutSchema).enhance(async ({submit, form}) => {
       await submit();
       if (createCheckout.result) {
         redirectingToCheckout = true;
@@ -243,7 +245,6 @@
         <label>
           Name*:
           <input {...createCheckout.fields.name.as('text')} maxlength="40" required />
-          <!-- <span class="form-tip">Max 40 characters</span> -->
         </label>
 
         <label>
@@ -254,7 +255,6 @@
             required
             placeholder={isUSAddress ? "Street address" : "Primary address line"}
           />
-          <!-- <span class="form-tip">Max {isUSAddress ? 64 : 200} characters</span> -->
         </label>
 
         <label>
@@ -267,7 +267,6 @@
           <label>
             City*:
             <input {...createCheckout.fields.city.as('text')} maxlength="200" required />
-            <!-- <span class="form-tip">Max 200 characters</span> -->
           </label>
 
           <label>
@@ -279,7 +278,6 @@
               placeholder="CA"
               required
             />
-            <!-- <span class="form-tip">2-letter state code (e.g., CA, NY)</span> -->
           </label>
 
           <label>
@@ -290,7 +288,6 @@
               placeholder="12345 or 12345-1234"
               required
             />
-            <!-- <span class="form-tip">Format: 12345 or 12345-1234</span> -->
           </label>
         {:else}
           <!-- International fields (optional or less strict) -->
@@ -302,7 +299,6 @@
           <label>
             Postal Code*:
             <input {...createCheckout.fields.postalCode.as('text')} maxlength="40" />
-            <!-- <span class="form-tip">Max 40 characters</span> -->
           </label>
         {/if}
       </div>
@@ -314,7 +310,7 @@
       </div>
 
       <div id="action">
-        <button class="form flex gap-1">
+        <button class="primary flex gap-1">
           {#if !!createCheckout.pending || redirectingToCheckout}
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin lucide lucide-loader-icon lucide-loader"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>
           {/if}

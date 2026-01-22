@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { POSTCARD_CONFIG } from "$lib";
-  const SUPPORT_EMAIL = "reberrymemberer@paprika.fyi";
 </script>
 
 <div class="w-full min-h-full px-3 pb-3 flex flex-col">
@@ -13,12 +12,12 @@
     <span class="z-20">
       Reberrymemberer – A small postal experiment. An asynchronous communication network to keep in touch and for offline archival of memories. 
       It’s a tool for instant expression and calm delivery over time and distance. For selfish thoughts or shared memories.
-      <span class="max-sm:hidden inline-block"><a href="/write">Send</a>.</span>
+      <span class="max-sm:hidden inline-block"><a href="/write">Send</a>, <a href="/book">Contacts</a>.</span>
     </span>
     <img 
       class="select-none object-cover h-40 md:h-90 postcard-shadow" 
       loading="eager"
-      src="./examples/page_back0.jpg" alt="" 
+      src="./examples/page_back2.jpg" alt="" 
     />
     <div class="fixed bottom-2 right-2 text-6xl sm:hidden">
       <a class="hover:italic decoration-solid" href="/write">Send</a>
@@ -81,7 +80,7 @@
           Please review the delivery address carefully before sending.
         </p>
         <p class="">
-          If your address is incorrect, please immediately email <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a>.
+          If your address is incorrect, please immediately email <a href="mailto:{POSTCARD_CONFIG.support_email}">{POSTCARD_CONFIG.support_email}</a>.
         </p>
       </div>
     </div>
