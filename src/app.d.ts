@@ -8,8 +8,10 @@ declare global {
             env: Env & {
                 R2: R2Bucket;
                 DB: D1Database;
-                ENV: "production"|"development";
+                ENV: "prod"|"dev";
                 DEFAULT_SEND_ADR_ID: string;
+                
+                ENCRYPTION_KEY: string;
                 RESEND_API: string;
                 LOB_API_PUB: string;
                 LOB_API_SECRET: string;

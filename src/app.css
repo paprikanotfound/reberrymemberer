@@ -17,7 +17,7 @@
 	button {
 		@apply hover:cursor-pointer underline decoration-solid hover:underline-offset-2;
 	}
-	button.form {
+	button.primary {
 		@apply no-underline bg-white drop-shadow-sm drop-shadow-black/30 
 			text-[17px] rounded-md leading-none py-[1px] px-3
 			hover:bg-neutral-50 active:scale-[98%];
