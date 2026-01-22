@@ -20,6 +20,6 @@ export const GetAddressLink = form(CheckoutSchema, async (request) => {
 
   const baseUrl = `${url.origin}${ROUTES.send}`;
   const link = await generateAddressLink(baseUrl, addressTo, platform!.env.ENCRYPTION_KEY);
-
+  
   return { link };
 });

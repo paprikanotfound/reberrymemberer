@@ -28,10 +28,14 @@
   let copySuccess = $state(false);
 
   function copyToClipboard() {
-    navigator.clipboard.writeText(generatedLink).then(() => {
-      copySuccess = true;
-      setTimeout(() => copySuccess = false, 2000);
-    });
+    try {
+      navigator.clipboard.writeText(generatedLink).then(() => {
+        copySuccess = true;
+        setTimeout(() => copySuccess = false, 2000);
+      });
+    } catch (error) {
+      console.error(error)
+    }
   }
 </script>
 

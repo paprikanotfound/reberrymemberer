@@ -5,7 +5,7 @@
 <div class="w-full min-h-full px-3 pb-3 flex flex-col">
   <section class="relative min-h-[100dvh] flex flex-col justify-center items-center">
     <img 
-      class="select-none object-cover h-40 md:h-90 postcard-shadow" 
+      class="select-none object-cover h-44 md:h-90 postcard-shadow" 
       loading="eager"
       src="./examples/front1.jpg" alt="" 
     />
@@ -13,11 +13,12 @@
       Reberrymemberer — A small postal experiment. An asynchronous communication network to keep in touch and for offline archival of memories. 
       It’s a tool for instant expression and calm delivery over time and distance. For selfish thoughts or shared memories.
       <span class="max-sm:hidden inline-block"><a href="{ROUTES.send}">Send</a>, <a href="{ROUTES.receive}">Receive</a>.</span>
+      <span class="sm:hidden inline-block"><a href="{ROUTES.send}">Send</a>, <a href="{ROUTES.receive}">Receive</a>.</span>
     </span>
     <img 
-      class="select-none object-cover h-40 md:h-90 postcard-shadow" 
+      class="select-none object-cover h-44 md:h-90 postcard-shadow" 
       loading="eager"
-      src="./examples/page_back2.jpg" alt="" 
+      src="./examples/page_back1.jpg" alt="" 
     />
     <div class="fixed bottom-2 right-2 text-6xl sm:hidden">
       <a class="hover:italic decoration-solid" href="{ROUTES.send}">Send</a>
