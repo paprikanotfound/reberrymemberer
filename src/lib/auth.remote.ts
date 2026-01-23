@@ -5,6 +5,7 @@ import { redirect } from '@sveltejs/kit';
 import { ROUTES } from '$lib';
 import { initResend } from './server/resend';
 import { generateOTPSixNumbers, generateTokenTwentyFourChars } from './server/crypto';
+import { dev } from '$app/environment';
 
 // Constants
 const EMAIL_SEND_LOCAL = false;
@@ -36,7 +37,7 @@ async function sendVerificationCode(user: UserRow) {
     limit: RATE_LIMIT_USER_MAX_ATTEMPTS,
     windowSeconds: RATE_LIMIT_WINDOW_SECONDS
   });
-  if (!rateLimitUser && platform!.env.ENV !== "dev") 
+  if (!rateLimitUser && !dev) 
     return { ok: false, message: "Too many attempts, please wait before retrying." }
 
 	// Generate new OTP token
@@ -47,7 +48,7 @@ async function sendVerificationCode(user: UserRow) {
   if (!otp.success) return { ok: false, message: "Error creating verification code." }
 
   // Send token
-	if (platform!.env.ENV == "dev" && !EMAIL_SEND_LOCAL) {
+	if (dev && !EMAIL_SEND_LOCAL) {
 		console.log('token: ', code); // skip email for convenience
 	} else {
     await initResend(platform!.env.RESEND_API).sendOtpToEmail(user.email, code);
@@ -67,7 +68,7 @@ async function sendMagicLink(userId: string, email: string) {
     windowSeconds: RATE_LIMIT_WINDOW_SECONDS
   });
 
-  if (!rateLimitUser && platform!.env.ENV !== "dev") {
+  if (!rateLimitUser && !dev) {
     return { ok: false, message: "Too many attempts, please wait before retrying." }
   }
 
@@ -82,7 +83,7 @@ async function sendMagicLink(userId: string, email: string) {
   const link = new URL(`${url.origin}${ROUTES.magic_link}`);
   link.searchParams.set('token', code);
 
-  if (platform!.env.ENV == "dev") {
+  if (dev) {
     // skip email for testing
     console.log('verification link: ', link.toString());
   } else {

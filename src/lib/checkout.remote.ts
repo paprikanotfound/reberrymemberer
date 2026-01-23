@@ -7,13 +7,14 @@ import { CheckoutSchema } from "./checkout.types";
 import { isErrorRetryableD1, tryWhile } from "./utils/retry";
 import { initPostalClient, type LobAddress, type PostalClient } from "./server/lob";
 import { initS3 } from "./server/S3";
+import { dev } from "$app/environment";
 
 // Constants
 const ADDRESS_VERIFICATION = false;
 const BUCKET_PATHS = {
   // Delete objects after 90 day(s): "tmp/90/*"
   // To allow time for customer support issues.
-  uploadCheckoutAssetPath: (filename: string, isDevEnv: boolean) => `tmp/90/reberrymemberer/${isDevEnv ? "dev":"prod"}/${filename}`,
+  uploadCheckoutAssetPath: (filename: string) => `tmp/90/reberrymemberer/${dev ? "dev":"prod"}/${filename}`,
 }
 
 async function createStripeCheckoutSession(
@@ -124,7 +125,6 @@ async function verifyAddress(postal: PostalClient, addressTo: LobAddress) {
 
 export const CreateCheckout = form(CheckoutSchema, async (request, issue) => {
   const { platform, url } = getRequestEvent();
-  const devEnv = platform!.env.ENV == "dev";
   const clientRefId = crypto.randomUUID();
 
   const addressTo = {
@@ -141,9 +141,9 @@ export const CreateCheckout = form(CheckoutSchema, async (request, issue) => {
   try {
     if (ADDRESS_VERIFICATION) {
       const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
-      if (devEnv) {
-        // await mockVerifyAddress(lob, addressTo);
-        await verifyAddress(lob, addressTo);
+      if (dev) {
+        await mockVerifyAddress(lob, addressTo);
+        // await verifyAddress(lob, addressTo);
       } else {
         await verifyAddress(lob, addressTo);
       }
@@ -174,8 +174,8 @@ export const CreateCheckout = form(CheckoutSchema, async (request, issue) => {
   console.log("[createCheckout] Generating signed URLs");
 
   // Generate R2 keys for postcard page images
-  const keyFront = BUCKET_PATHS.uploadCheckoutAssetPath(`${clientRefId}_front.jpg`, devEnv);
-  const keyBack = BUCKET_PATHS.uploadCheckoutAssetPath(`${clientRefId}_back.jpg`, devEnv);
+  const keyFront = BUCKET_PATHS.uploadCheckoutAssetPath(`${clientRefId}_front.jpg`);
+  const keyBack = BUCKET_PATHS.uploadCheckoutAssetPath(`${clientRefId}_back.jpg`);
 
   // Generate presigned URLs that the client will use to upload images
   const s3 = initS3({
