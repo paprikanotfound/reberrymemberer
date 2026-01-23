@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createCheckout } from "$lib/checkout.remote";
+  import { CreateCheckout } from "$lib/checkout.remote";
   import { GetAddressLink } from "$lib/link.remote";
   import countries from '$lib/supported_countries_200.json';
 	import { initForm } from "$lib/utils/forms.svelte";
@@ -131,7 +131,7 @@
         {/if}
       </div>   
       <div id="issues">
-        {#each createCheckout.fields.allIssues() as issue}
+        {#each CreateCheckout.fields.allIssues() as issue}
           <p class="form-issue">{issue.message}</p>
         {/each}
       </div>

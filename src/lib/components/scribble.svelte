@@ -64,7 +64,8 @@
     ...restProps
   }: Props = $props();
 
-  let strokesTest = $derived($state.snapshot(strokes))
+  // Workaround for weird reactivity issue
+  let _strokes = $derived($state.snapshot(strokes))
 
   let elmBox: HTMLDivElement | undefined = $state();
   let elmInputBg: HTMLInputElement | undefined = $state();
@@ -500,7 +501,7 @@
       </defs> 
       filter={!isFullscreen && !isMobile.current ? "url(#turbulence-filter)" : undefined}
       -->
-      {#each strokesTest as stroke, index (index)}
+      {#each _strokes as stroke, index (index)}
         {#if stroke.points.length}
           <path
             d={getSvgPathFromStroke(stroke as Stroke)}

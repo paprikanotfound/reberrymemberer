@@ -12,8 +12,7 @@
     <span class="z-20">
       Reberrymemberer — A small postal experiment. An asynchronous communication network to keep in touch and for offline archival of memories. 
       It’s a tool for instant expression and calm delivery over time and distance. For selfish thoughts or shared memories.
-      <span class="max-sm:hidden inline-block"><a href="{ROUTES.send}">Send</a>, <a href="{ROUTES.receive}">Receive</a>.</span>
-      <span class="sm:hidden inline-block"><a href="{ROUTES.send}">Send</a>, <a href="{ROUTES.receive}">Receive</a>.</span>
+      <span class="max-sm:hidden inline-block"><a href="{ROUTES.send}">Send</a>.</span>
     </span>
     <img 
       class="select-none object-cover h-44 md:h-90 postcard-shadow" 
