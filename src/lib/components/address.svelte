@@ -1,7 +1,6 @@
 <script lang="ts">
   import { CreateCheckout } from "$lib/checkout.remote";
   import countries from '$lib/supported_countries_200.json';
-	import { untrack } from "svelte";
 
   type Fields = typeof CreateCheckout.fields;
 

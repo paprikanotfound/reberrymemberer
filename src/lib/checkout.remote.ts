@@ -7,7 +7,6 @@ import { CheckoutSchema } from "./checkout.types";
 import { isErrorRetryableD1, tryWhile } from "./utils/retry";
 import { initPostalClient, type LobAddress, type PostalClient } from "./server/lob";
 import { initS3 } from "./server/S3";
-import countries from '$lib/supported_countries_200.json'
 
 // Constants
 const ADDRESS_VERIFICATION = false;
@@ -138,14 +137,13 @@ export const CreateCheckout = form(CheckoutSchema, async (request, issue) => {
     address_country: request.country,
   } satisfies LobAddress;
 
-  console.log(addressTo)
-
   // Address verification: Requires a live key.
   try {
     if (ADDRESS_VERIFICATION) {
       const lob = initPostalClient({ apiKey: platform!.env.LOB_API_SECRET });
       if (devEnv) {
-        await mockVerifyAddress(lob, addressTo);
+        // await mockVerifyAddress(lob, addressTo);
+        await verifyAddress(lob, addressTo);
       } else {
         await verifyAddress(lob, addressTo);
       }

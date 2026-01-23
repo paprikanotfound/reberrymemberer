@@ -26,7 +26,7 @@
   initForm(CreateCheckout, () => {
     return {
       sendDate: today.toISOString().split('T')[0],
-      country: 'KR', //data.prefillAddress ? data.prefillAddress.address_country : getCountryFromTimezone(),
+      country: data.prefillAddress ? data.prefillAddress.address_country : getCountryFromTimezone(),
       name: data.prefillAddress ? data.prefillAddress.name : undefined,
       address: data.prefillAddress ? data.prefillAddress.address_line1 : undefined,
       addressLine2: data.prefillAddress ? data.prefillAddress.address_line2 : undefined,
