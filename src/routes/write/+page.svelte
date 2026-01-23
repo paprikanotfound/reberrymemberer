@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { APP_CONFIG, createPersistedScribble, POSTCARD_CONFIG, type ScribbleContent } from "$lib";
-	import { createCheckout } from "$lib/checkout.remote";
+	import { CreateCheckout } from "$lib/checkout.remote";
 	import { CheckoutSchema } from "$lib/checkout.types";
+	import Address from "$lib/components/address.svelte";
 	import Scribble from "$lib/components/scribble.svelte";
-  import countries from '$lib/supported_countries_200.json';
 	import { drawObjectCover, drawStokes } from "$lib/utils/canvas";
 	import { base64ToBlob } from "$lib/utils/files";
 	import { initForm } from "$lib/utils/forms.svelte";
@@ -21,13 +21,12 @@
   const scribbleFront = createPersistedScribble(APP_CONFIG.scribble.persist_front);
   const scribbleBack = createPersistedScribble(APP_CONFIG.scribble.persist_back);
 
-  
   // Set initial Send Date value and default country
   const today = new Date();
-  initForm(createCheckout, () => {
+  initForm(CreateCheckout, () => {
     return {
       sendDate: today.toISOString().split('T')[0],
-      country: data.prefillAddress ? data.prefillAddress.address_country : getCountryFromTimezone(),
+      country: 'KR', //data.prefillAddress ? data.prefillAddress.address_country : getCountryFromTimezone(),
       name: data.prefillAddress ? data.prefillAddress.name : undefined,
       address: data.prefillAddress ? data.prefillAddress.address_line1 : undefined,
       addressLine2: data.prefillAddress ? data.prefillAddress.address_line2 : undefined,
@@ -39,16 +38,12 @@
   
   // Force 'Send Date' >= today
   $effect(() => {
-    const selected = createCheckout.fields.sendDate.value();
+    const selected = CreateCheckout.fields.sendDate.value();
     untrack(async () => {
       const a = new Date(selected);
-      if (a < today) createCheckout.fields.sendDate.set(today.toISOString().split('T')[0]);
+      if (a < today) CreateCheckout.fields.sendDate.set(today.toISOString().split('T')[0]);
     });
   });
-
-  // Track if the selected country is US
-  let isUSAddress = $derived(createCheckout.fields.country.value() === 'US');
-
   
   async function createPageImage(content: ScribbleContent, type?: string, quality?: number, bgColor?: string) {
     return new Promise<Blob>(async (res, rej) => {
@@ -122,27 +117,6 @@
   </button>
 </div>
 
-<!-- testing image generation
-<button onclick={async () => {
-  // Test export and download front image
-  const frontBlob = await createPageImage(scribbleFront.content);
-  const frontUrl = URL.createObjectURL(frontBlob);
-  const frontLink = document.createElement('a');
-  frontLink.href = frontUrl;
-  frontLink.download = 'postcard-front.png';
-  frontLink.click();
-  URL.revokeObjectURL(frontUrl);
-  // Test export and download back image
-  const backBlob = await createPageImage(scribbleBack.content);
-  const backUrl = URL.createObjectURL(backBlob);
-  const backLink = document.createElement('a');
-  backLink.href = backUrl;
-  backLink.download = 'postcard-back.png';
-  backLink.click();
-  URL.revokeObjectURL(backUrl);
-}}>(download)</button> 
--->
-
 <div class="flex flex-col items-start justify-center gap-8 sm:gap-12 p-3">
   <div class="grid grid-cols-3 w-full">
     <a href="/">(back)</a>
@@ -215,11 +189,12 @@
       <span>Address & Details</span>
     </div>
 
-    <form {...createCheckout.preflight(CheckoutSchema).enhance(async ({submit, form}) => {
+    <form {...CreateCheckout.preflight(CheckoutSchema).enhance(async ({submit, form}) => {
       await submit();
-      if (createCheckout.result) {
+
+      if (CreateCheckout.result) {
         redirectingToCheckout = true;
-        const { checkoutUrl, uploadUrls } = createCheckout.result;
+        const { checkoutUrl, uploadUrls } = CreateCheckout.result;
 
         // Generate page images
         const frontBlob = await createPageImage(scribbleFront.content, 'image/jpeg', 0.95, POSTCARD_CONFIG.printing.front_background);
@@ -242,85 +217,17 @@
         Send Date: <input {...createCheckout.fields.sendDate.as('date')} />
       </label> -->
 
-      <div id="address" class="flex flex-col gap-2">
-        <label>
-          Country*:
-          <select {...createCheckout.fields.country.as('select')} required>
-            <option value="">Select country</option>
-            {#each countries as ctr }
-              <option value="{ctr.iso31661Alpha2}">{ctr.englishName}</option>
-            {/each}
-          </select>
-        </label>
+      <Address bind:fields={CreateCheckout.fields} />
 
-        <label>
-          Name*:
-          <input {...createCheckout.fields.name.as('text')} maxlength="40" required />
-        </label>
-
-        <label>
-          Address*:
-          <input
-            {...createCheckout.fields.address.as('text')}
-            maxlength={isUSAddress ? 64 : 200}
-            required
-            placeholder={isUSAddress ? "Street address" : "Primary address line"}
-          />
-        </label>
-
-        <label>
-          Address Line 2:
-          <input {...createCheckout.fields.addressLine2.as('text')} />
-        </label>
-
-        {#if isUSAddress}
-          <label>
-            City*:
-            <input {...createCheckout.fields.city.as('text')} maxlength="200" required />
-          </label>
-
-          <label>
-            State*:
-            <input
-              {...createCheckout.fields.state.as('text')}
-              maxlength="2"
-              pattern="[a-zA-Z]{2}"
-              placeholder="CA"
-              required
-            />
-          </label>
-
-          <label>
-            ZIP Code*:
-            <input
-              {...createCheckout.fields.postalCode.as('text')}
-              pattern="\d{5}(-\d{4})?"
-              placeholder="12345 or 12345-1234"
-              required
-            />
-          </label>
-        {:else}
-          <label>
-            City:
-            <input {...createCheckout.fields.city.as('text')} />
-          </label>
-
-          <label>
-            Postal Code*:
-            <input {...createCheckout.fields.postalCode.as('text')} maxlength="40" />
-          </label>
-        {/if}
-      </div>
-      
       <div id="issues">
-        {#each createCheckout.fields.allIssues() as issue}
+        {#each CreateCheckout.fields.allIssues() as issue}
           <p class="form-issue">{issue.message}</p>
         {/each}
       </div>
 
       <div id="action">
         <button class="primary flex gap-1">
-          {#if !!createCheckout.pending || redirectingToCheckout}
+          {#if !!CreateCheckout.pending || redirectingToCheckout}
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin lucide lucide-loader-icon lucide-loader"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>
           {/if}
           <span>Checkout</span>
