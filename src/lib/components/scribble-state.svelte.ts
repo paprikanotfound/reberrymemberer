@@ -43,16 +43,21 @@ export type Stroke = {
  */
 export type ScribbleContent = {
   strokes: Stroke[];
+  backgroundImage: string | null; // base64 string
+};
+
+export type ScribbleTools = {
   color: string;
   size: number;
-  backgroundImage: string | null; // base64 string
 };
 
 const DEFAULT_CONTENT: ScribbleContent = {
   strokes: [],
+  backgroundImage: null,
+};
+const DEFAULT_TOOLS: ScribbleTools = {
   color: '#000000',
   size: 5,
-  backgroundImage: null,
 };
 
 export type PersistedScribble = ReturnType<typeof createPersistedScribble>;
@@ -68,26 +73,38 @@ export function clearPersistedScribble(key: string) {
 }
 
 export function createPersistedScribble(key: string) {
-  let state = new PersistedState<ScribbleContent>(
+  let stateContent = new PersistedState<ScribbleContent>(
     key,
     DEFAULT_CONTENT,
     { storage: "local" }
   );
-  let history = new StateHistory(() => state.current, (c) => (state.current = c));
+  let stateTools = new PersistedState<ScribbleTools>(
+    key+"tools",
+    DEFAULT_TOOLS,
+    { storage: "local" }
+  );
+  let history = new StateHistory(() => stateContent.current, (c) => (stateContent.current = c));
 
   return {
     get history() { return history },
     get canUndo() { return history.canUndo },
     get canRedo() { return history.canRedo },
+    get tools(): ScribbleTools {
+      return stateTools.current
+    },
+    set tools(update: Partial<ScribbleTools>) {
+      stateTools.current = {
+        color: update.color ?? stateTools.current.color,
+        size: update.size ?? stateTools.current.size,
+      };
+    },
     get content(): ScribbleContent {
-      return state.current;
+      return stateContent.current;
     },
     set content(update: Partial<ScribbleContent>) {
-      state.current = {
-        strokes: update.strokes ?? state.current.strokes,
-        color: update.color ?? state.current.color,
-        size: update.size ?? state.current.size,
-        backgroundImage: update.backgroundImage ?? state.current.backgroundImage,
+      stateContent.current = {
+        strokes: update.strokes ?? stateContent.current.strokes,
+        backgroundImage: update.backgroundImage ?? stateContent.current.backgroundImage,
       };
     },
     undo() {
@@ -97,7 +114,7 @@ export function createPersistedScribble(key: string) {
       history.redo();
     },
     resetContent() {
-      state.current = DEFAULT_CONTENT;
+      stateContent.current = DEFAULT_CONTENT;
     },
   };
 }

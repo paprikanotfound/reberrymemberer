@@ -139,8 +139,8 @@
         targetHeight={POSTCARD_CONFIG.printing.trim.h}
         backgroundColor={POSTCARD_CONFIG.printing.front_background}
         bind:strokes={scribbleFront.content.strokes}
-        bind:color={scribbleFront.content.color}
-        bind:size={scribbleFront.content.size}
+        bind:color={scribbleFront.tools.color}
+        bind:size={scribbleFront.tools.size}
         bind:backgroundImage={scribbleFront.content.backgroundImage}
         bind:penMode={penMode}
         onUndo={() => scribbleFront.undo()}
@@ -171,8 +171,8 @@
         targetWidth={POSTCARD_CONFIG.printing.trim.w}
         targetHeight={POSTCARD_CONFIG.printing.trim.h}
         bind:strokes={scribbleBack.content.strokes}
-        bind:color={scribbleBack.content.color}
-        bind:size={scribbleBack.content.size}
+        bind:color={scribbleBack.tools.color}
+        bind:size={scribbleBack.tools.size}
         bind:backgroundImage={scribbleBack.content.backgroundImage}
         bind:penMode={penMode}
         onUndo={() => scribbleBack.undo()}
