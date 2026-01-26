@@ -1,25 +1,41 @@
 <script lang="ts">
 	import { POSTCARD_CONFIG, ROUTES } from "$lib";
+	import Postcard from "$lib/components/postcard.svelte";
 </script>
 
 <div class="w-full min-h-full px-3 pb-3 flex flex-col">
   <section class="relative min-h-[100dvh] flex flex-col justify-center items-center">
-    <img 
-      class="select-none object-cover h-44 md:h-90 postcard-shadow" 
+    <!-- <img 
+      class="select-none object-cover h-44 md:h-90 postcard-shadow rotate-1" 
       loading="eager"
       src="./examples/front1.jpg" alt="" 
-    />
-    <span class="z-20">
-      Reberrymemberer — A small postal experiment. An asynchronous communication network to keep in touch and for offline archival of memories. 
-      It’s a tool for instant expression and calm delivery over time and distance. For selfish thoughts or shared memories.
+    /> -->
+    <Postcard 
+      front="./examples/front1.jpg" 
+      back="./examples/page_back2.jpg"
+      class="select-none h-40 md:h-80 rotate-1" 
+      aspect={1875/1275} 
+      />
+
+    <div class="z-20 w-full">
+      <span>
+        Reberrymemberer — A small postal experiment.
+        We seek to discover moments of personal expression and reflective connection in a world of constant immediacy, through the unique cadence of calm delivery across time and distance. For selfish thoughts or shared remembrance.
+      </span>
       <span class="max-sm:hidden inline-block"><a href="{ROUTES.send}">Send</a>.</span>
-    </span>
-    <img 
-      class="select-none object-cover h-44 md:h-90 postcard-shadow" 
+    </div>
+    <Postcard 
+      front="./examples/page_back1.jpg" 
+      back="./examples/front2.jpg"
+      class="select-none h-40 md:h-80 rotate-1" 
+      aspect={1875/1275} 
+      />
+    <!-- <img 
+      class="select-none object-cover h-44 md:h-90 postcard-shadow rotate-[.5deg]" 
       loading="eager"
       src="./examples/page_back1.jpg" alt="" 
-    />
-    <div class="fixed bottom-2 right-2 text-6xl sm:hidden">
+    /> -->
+    <div class="fixed bottom-2 right-2 text-4xl sm:hidden">
       <a class="hover:italic decoration-solid" href="{ROUTES.send}">Send</a>
     </div>
   </section>

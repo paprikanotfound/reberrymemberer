@@ -16,88 +16,98 @@ export type Stroke = {
   color: string;
   options: StrokeOptions;
 }
-
-/**
- * Persisted state for the Scribble component.
- * This keeps the component pure while allowing state persistence at the parent level.
- *
- * @example
- * ```svelte
- * <script>
- *   import { createPersistedScribble } from '$lib';
- *   import Scribble from '$lib/components/scribble.svelte';
- *
- *   const scribble = createPersistedScribble('my-scribble-key');
- * </script>
- *
- * <Scribble
- *   bind:strokes={scribble.content.strokes}
- *   bind:color={scribble.content.color}
- *   bind:size={scribble.content.size}
- *   bind:backgroundImage={scribble.content.backgroundImage}
- * />
- *
- * <button onclick={() => scribble.undo()}>Undo</button>
- * <button onclick={() => scribble.redo()}>Redo</button>
- * ```
- */
 export type ScribbleContent = {
   strokes: Stroke[];
+  backgroundImage: string | null; // base64 string
+  backgroundOffsetX: number;
+  backgroundOffsetY: number;
+  _version?: number; // Schema version for migrations
+};
+export type ScribbleTools = {
   color: string;
   size: number;
-  backgroundImage: string | null; // base64 string
 };
 
+const CURRENT_VERSION = 1;
 const DEFAULT_CONTENT: ScribbleContent = {
   strokes: [],
+  backgroundImage: null,
+  backgroundOffsetX: 0,
+  backgroundOffsetY: 0,
+  _version: CURRENT_VERSION,
+};
+const DEFAULT_TOOLS: ScribbleTools = {
   color: '#000000',
   size: 5,
-  backgroundImage: null,
 };
 
-export type PersistedScribble = ReturnType<typeof createPersistedScribble>;
+/**
+ * Migrate old schema versions to the current version
+ */
+function migrateContent(data: any): ScribbleContent {
+  // If no version, it's the old schema without offset fields
+  if (!data._version) {
+    return {
+      strokes: data.strokes || [],
+      backgroundImage: data.backgroundImage || null,
+      backgroundOffsetX: 0, // Default value for old data
+      backgroundOffsetY: 0, // Default value for old data
+      _version: CURRENT_VERSION,
+    };
+  }
 
+  // Already current version
+  return data as ScribbleContent;
+}
+
+/**
+ * Save data to localStorage
+ */
+function saveToStorage<T>(key: string, value: T): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    console.warn(`Failed to save ${key} to localStorage:`, e);
+  }
+}
 
 export function clearPersistedScribble(key: string) {
-  let scribble = new PersistedState<ScribbleContent>(
-    key,
-    DEFAULT_CONTENT,
-    { storage: "local" }
-  );
-  scribble.current = DEFAULT_CONTENT;
+  saveToStorage(key, DEFAULT_CONTENT);
+  saveToStorage(key + "tools", DEFAULT_TOOLS);
 }
 
 export function createPersistedScribble(key: string) {
-  let state = new PersistedState<ScribbleContent>(
-    key,
-    DEFAULT_CONTENT,
-    { storage: "local" }
-  );
-  let history = new StateHistory(() => state.current, (c) => (state.current = c));
+  // Load initial state from localStorage with migration
+  let contentState = new PersistedState(key, DEFAULT_CONTENT, {
+    serializer: {
+      serialize: JSON.stringify,
+		  deserialize: (c) => migrateContent(JSON.parse(c))
+    }
+  });
+  let toolsState = new PersistedState(key + "tools", DEFAULT_TOOLS);
+
+  // Create history for undo/redo
+  let history = new StateHistory(() => contentState.current, (c) => {
+    contentState.current = c;
+  });
+
 
   return {
     get history() { return history },
     get canUndo() { return history.canUndo },
     get canRedo() { return history.canRedo },
-    get content(): ScribbleContent {
-      return state.current;
-    },
-    set content(update: Partial<ScribbleContent>) {
-      state.current = {
-        strokes: update.strokes ?? state.current.strokes,
-        color: update.color ?? state.current.color,
-        size: update.size ?? state.current.size,
-        backgroundImage: update.backgroundImage ?? state.current.backgroundImage,
-      };
-    },
-    undo() {
-      history.undo();
-    },
-    redo() {
-      history.redo();
-    },
+    get tools() { return toolsState.current; },
+    get content() { return contentState.current; },
+    undo() { history.undo(); },
+    redo() { history.redo(); },
     resetContent() {
-      state.current = DEFAULT_CONTENT;
+      contentState.current = DEFAULT_CONTENT;
+      saveToStorage(key, contentState);
     },
   };
 }
+
+
+export type PersistedScribble = ReturnType<typeof createPersistedScribble>;
