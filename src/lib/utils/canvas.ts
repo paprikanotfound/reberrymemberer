@@ -3,10 +3,11 @@ import getStroke from "perfect-freehand";
 
 
 export function drawObjectCover(
-  ctx: CanvasRenderingContext2D, 
-  img: HTMLImageElement, 
-  canvasWidth: number, 
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  canvasWidth: number,
   canvasHeight: number,
+  offsetXPercent: number = 0,
   offsetYPercent: number = 0
 ) {
   const iw = img.width;
@@ -22,7 +23,13 @@ export function drawObjectCover(
   // If image is wider than canvas (crop sides)
   if (imgRatio > canvasRatio) {
     sw = ih * canvasRatio;
-    sx = (iw - sw) / 2;
+    // Center horizontally
+    const centerSx = (iw - sw) / 2;
+    // Additional offset: % of available crop space
+    const rawOffsetX = (offsetXPercent / 100) * (iw - sw);
+    sx = centerSx + rawOffsetX;
+    // Clamp to stay within image bounds
+    sx = Math.max(0, Math.min(sx, iw - sw));
   }
   // If image is taller than canvas (crop top/bottom)
   else {
@@ -30,10 +37,9 @@ export function drawObjectCover(
     sh = iw / canvasRatio;
     // Center vertically
     const centerSy = (ih - sh) / 2;
-    // Additional offset: % of full image height (not cropped height)
-    const rawOffset = (-offsetYPercent / 100) * ih;
-    // Final crop Y position
-    sy = centerSy + rawOffset;
+    // Additional offset: % of available crop space
+    const rawOffsetY = (offsetYPercent / 100) * (ih - sh);
+    sy = centerSy + rawOffsetY;
     // Clamp to stay within image bounds
     sy = Math.max(0, Math.min(sy, ih - sh));
   }

@@ -14,6 +14,8 @@
     strokes?: Stroke[];
     backgroundColor?: string;
     backgroundImage?: string | null;
+    backgroundOffsetX?: number;
+    backgroundOffsetY?: number;
     color?: string;
     size?: number;
     class?: string;
@@ -41,6 +43,8 @@
     strokes = $bindable([]),
     backgroundColor = $bindable("#ffffff"),
     backgroundImage = $bindable<string | null>(null),
+    backgroundOffsetX = $bindable(0),
+    backgroundOffsetY = $bindable(0),
     color = $bindable('#000000'),
     size = $bindable(5),
     targetWidth = 1800,
@@ -100,7 +104,7 @@
 
   // Toolbar state
   let expandedTool: 'color' | 'size' | 'background' | null = $state(null);
-  let activeTool: 'draw' | 'erase' = $state('draw');
+  let activeTool: 'draw' | 'erase' | 'adjust-position' = $state('draw');
 
   // Available colors and sizes - different palettes for light/dark backgrounds
   const lightBgColors = ['#000000', '#FF6B6B', '#69DB7C', '#00068E', '#CC5DE8'];
@@ -110,6 +114,14 @@
 
   let eraserStroke: { points: [number, number, number][] } | undefined = $state();
   let erasedStrokeIndices = new SvelteSet<number>();
+
+  // Background adjustment state
+  let adjustStartPoint: [number, number] | undefined = $state();
+  let adjustStartOffset: [number, number] = $state([0, 0]);
+  // Local proxy values for drag gesture (only commit to bindable on gesture end)
+  let adjustingOffsetX = $state(0);
+  let adjustingOffsetY = $state(0);
+  let isAdjusting = $state(false);
 
   // Detect if mobile based on screen width
   const isMobile = new MediaQuery('max-width: 640px');
@@ -122,6 +134,12 @@
     } else if (activeTool === 'erase' && erasedStrokeIndices.size > 0) {
       strokes = strokes.filter((_, i) => !erasedStrokeIndices.has(i));
       erasedStrokeIndices.clear();
+    } else if (activeTool === 'adjust-position') {
+      // Commit the final offset values to bindable props
+      backgroundOffsetX = adjustingOffsetX;
+      backgroundOffsetY = adjustingOffsetY;
+      adjustStartPoint = undefined;
+      isAdjusting = false;
     }
     eraserStroke = undefined;
   }
@@ -141,6 +159,31 @@
             erasedStrokeIndices.add(index);
           }
         });
+      }
+    } else if (activeTool === 'adjust-position') {
+      if (stroke && stroke.points.length > 0) {
+        const currentPoint = stroke.points[stroke.points.length - 1];
+
+        if (!adjustStartPoint) {
+          // Start of drag - record starting point and current offset
+          adjustStartPoint = [currentPoint[0], currentPoint[1]];
+          adjustStartOffset = [backgroundOffsetX, backgroundOffsetY];
+          adjustingOffsetX = backgroundOffsetX;
+          adjustingOffsetY = backgroundOffsetY;
+          isAdjusting = true;
+        } else {
+          // During drag - calculate delta and update LOCAL offset (not bindable)
+          const deltaX = currentPoint[0] - adjustStartPoint[0];
+          const deltaY = currentPoint[1] - adjustStartPoint[1];
+
+          // Scale the offset to be relative to the target size (reversed for natural panning)
+          const newOffsetX = adjustStartOffset[0] - (deltaX / targetWidth) * 100;
+          const newOffsetY = adjustStartOffset[1] - (deltaY / targetHeight) * 100;
+
+          // Clamp the offset to keep image within bounds (-50 to 50 gives full range of movement)
+          adjustingOffsetX = Math.max(-50, Math.min(50, newOffsetX));
+          adjustingOffsetY = Math.max(-50, Math.min(50, newOffsetY));
+        }
       }
     }
   }
@@ -168,6 +211,17 @@
     activeTool = activeTool === 'draw' ? 'erase' : 'draw';
     erasedStrokeIndices.clear();
     eraserStroke = undefined;
+  }
+
+  function toggleAdjustPosition() {
+    // If switching away from adjust-position while adjusting, commit changes
+    if (activeTool === 'adjust-position' && isAdjusting) {
+      backgroundOffsetX = adjustingOffsetX;
+      backgroundOffsetY = adjustingOffsetY;
+      isAdjusting = false;
+      adjustStartPoint = undefined;
+    }
+    activeTool = activeTool === 'adjust-position' ? 'draw' : 'adjust-position';
   }
 
   function undo() { onUndo?.(); }
@@ -216,7 +270,7 @@
     const normalized = files && files.length > 0 ? await normalizeFiles(files) : [];
     if (normalized.length === 0) return;
 
-    const resized = await resizeImage(normalized[0]);
+    const resized = await resizeImage(normalized[0], 2000, 2000);
     const base64 = await fileToBase64(resized);
 
     // Store as base64 for persistence
@@ -329,6 +383,19 @@
           <path d="M8.5 13H14M3.5 8.5L7.79289 4.20711C8.18342 3.81658 8.81658 3.81658 9.20711 4.20711L11.7929 6.79289C12.1834 7.18342 12.1834 7.81658 11.7929 8.20711L7.5 12.5L3.20711 12.5C2.81658 12.5 2.18342 12.5 1.79289 12.1095C1.40237 11.719 1.40237 11.0858 1.79289 10.6953L3.5 8.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
+
+      <!-- Adjust Position button (only show when background image exists) -->
+      {#if backgroundImage}
+        <button
+          onclick={toggleAdjustPosition}
+          class="btn-ui"
+          class:selected={activeTool === 'adjust-position'}
+          aria-label="Adjust background position"
+          transition:scale={{ duration: 200, start: 0.8 }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move-icon lucide-move"><path d="M12 2v20"/><path d="m15 19-3 3-3-3"/><path d="m19 9 3 3-3 3"/><path d="M2 12h20"/><path d="m5 9-3 3 3 3"/><path d="m9 5 3-3 3 3"/></svg>
+        </button>
+      {/if}
     </div>
   {/if}
 {/snippet}
@@ -454,7 +521,14 @@
       enabled: isFullscreenCanvas || !isMobile.current,
       penMode: penMode
     }}
-    class="relative overflow-hidden cursor-crosshair {classes}"
+    data-active-tool={activeTool}
+    class="
+      relative overflow-hidden 
+      data-[active-tool='draw']:cursor-crosshair 
+      data-[active-tool='erase']:cursor-crosshair 
+      data-[active-tool='adjust-position']:cursor-grab 
+      active:data-[active-tool='adjust-position']:cursor-grabbing 
+      {classes}"
     class:touch-none={isFullscreen}
     class:fullscreen-canvas={isFullscreenCanvas}
     style:background-color="{backgroundColor}"
@@ -468,9 +542,19 @@
         src={displayUrl}
         alt=""
         class="absolute inset-0 w-full h-full object-cover"
-        style="z-index: 0;"
+        style="z-index: 0; object-position: {50 + (isAdjusting ? adjustingOffsetX : backgroundOffsetX)}% {50 + (isAdjusting ? adjustingOffsetY : backgroundOffsetY)}%;"
       />
     {/if}
+
+    <!-- Adjust position mode overlay -->
+    {#if activeTool === 'adjust-position'}
+      <div class="absolute inset-0 bg-blue-500/10 z-10 flex items-center justify-center pointer-events-none">
+        <div class="text-blue-600 font-medium text-sm bg-white/90 px-3 py-1.5 rounded-full shadow-sm">
+          Drag to adjust position
+        </div>
+      </div>
+    {/if}
+
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {targetWidth} {targetHeight}" class="relative z-20 w-full h-full">
       <!-- Define turbulence filter -->
       <!-- <defs>
@@ -567,7 +651,7 @@
   <!-- Fullscreen overlay -->
   <div
     class="fullscreen-overlay select-none touch-none fixed inset-0 z-50 flex items-center justify-center bg-neutral-400/95"
-    transition:fade={{ duration: 200, easing: cubicOut }}
+    transition:fade={{ duration: 300, easing: cubicOut }}
     use:zoomPanGesture={{
       onZoomPanChange: handleZoomPanChange,
       getCanvasSize: () => ({ width: boxWidth, height: boxHeight }),
@@ -576,7 +660,8 @@
       enabled: isFullscreen
     }}
   >
-    <div class="relative w-full h-full flex items-center justify-center p-3">
+    <div 
+      class="relative w-full h-full flex items-center justify-center p-3">
       <!-- Top right buttons: Undo, Redo, Close -->
       <div class="absolute top-3 right-3 z-30 flex flex-row gap-2" transition:fade={{ duration: 200, delay: 100 }}>
         <!-- Undo button -->

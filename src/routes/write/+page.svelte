@@ -73,7 +73,14 @@
         try {
           const elmImage = await loadImage(base64ToBlob(content.backgroundImage));
           if (elmImage) {
-            drawObjectCover(ctx, elmImage, POSTCARD_CONFIG.printing.trim.w, POSTCARD_CONFIG.printing.trim.h, 0.5);
+            drawObjectCover(
+              ctx,
+              elmImage,
+              POSTCARD_CONFIG.printing.trim.w,
+              POSTCARD_CONFIG.printing.trim.h,
+              content.backgroundOffsetX ?? 0,
+              content.backgroundOffsetY ?? 0
+            );
           }
         } catch (e) {
           console.error("Failed to load background image:", e);
@@ -117,6 +124,35 @@
   </button>
 </div>
 
+<div class="fixed left-2 top-10 z-40 p-1 rounded-lg backdrop-blur-sm">
+  <button class="flex items-center justify-center gap-1" onclick={async () => {
+    try {
+      // Generate front page image with current settings
+      const frontBlob = await createPageImage(
+        scribbleFront.content,
+        'image/jpeg',
+        0.95,
+        POSTCARD_CONFIG.printing.front_background
+      );
+
+      // Create download link
+      const url = URL.createObjectURL(frontBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `postcard-front-${Date.now()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Failed to download image:', e);
+    }
+  }}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+    Download Front
+  </button>
+</div>
+
 <div class="flex flex-col items-start justify-center gap-8 sm:gap-12 p-3">
   <div class="grid grid-cols-3 w-full">
     <a href="/">(back)</a>
@@ -142,6 +178,8 @@
         bind:color={scribbleFront.tools.color}
         bind:size={scribbleFront.tools.size}
         bind:backgroundImage={scribbleFront.content.backgroundImage}
+        bind:backgroundOffsetX={scribbleFront.content.backgroundOffsetX}
+        bind:backgroundOffsetY={scribbleFront.content.backgroundOffsetY}
         bind:penMode={penMode}
         onUndo={() => scribbleFront.undo()}
         onRedo={() => scribbleFront.redo()}
@@ -173,7 +211,6 @@
         bind:strokes={scribbleBack.content.strokes}
         bind:color={scribbleBack.tools.color}
         bind:size={scribbleBack.tools.size}
-        bind:backgroundImage={scribbleBack.content.backgroundImage}
         bind:penMode={penMode}
         onUndo={() => scribbleBack.undo()}
         onRedo={() => scribbleBack.redo()}

@@ -8,14 +8,12 @@ import Compressor from "compressorjs";
  * @param file - The image File or Blob to resize
  * @returns Promise that resolves to the resized image as a File or Blob
  */
-export async function resizeImage(file: File|Blob) {
+export async function resizeImage(file: File|Blob, maxWidth: number, maxHeight: number) {
   return new Promise<File|Blob>((res, rej) => {
     new Compressor(file, {
       quality: 1,
-      maxHeight: 2000, // TODO: configure max size global const
-      maxWidth: 2000,
-      // The compression process is asynchronous,
-      // which means you have to access the `result` in the `success` hook function.
+      maxWidth: maxWidth,
+      maxHeight: maxHeight,
       success(result) {
         res(result)
       },
@@ -70,7 +68,7 @@ export function detectImageBrightness(image: HTMLImageElement, sampleSize: numbe
   }
 
   // Use a smaller canvas for performance
-  const maxSize = 200;
+  const maxSize = 100;
   const scale = Math.min(maxSize / image.width, maxSize / image.height, 1);
   canvas.width = image.width * scale;
   canvas.height = image.height * scale;

@@ -44,6 +44,9 @@ export type Stroke = {
 export type ScribbleContent = {
   strokes: Stroke[];
   backgroundImage: string | null; // base64 string
+  backgroundOffsetX: number;
+  backgroundOffsetY: number;
+  _version?: number; // Schema version for migrations
 };
 
 export type ScribbleTools = {
@@ -51,14 +54,37 @@ export type ScribbleTools = {
   size: number;
 };
 
+const CURRENT_VERSION = 1;
 const DEFAULT_CONTENT: ScribbleContent = {
   strokes: [],
   backgroundImage: null,
+  backgroundOffsetX: 0,
+  backgroundOffsetY: 0,
+  _version: CURRENT_VERSION,
 };
 const DEFAULT_TOOLS: ScribbleTools = {
   color: '#000000',
   size: 5,
 };
+
+/**
+ * Migrate old schema versions to the current version
+ */
+function migrateContent(data: any): ScribbleContent {
+  // If no version, it's the old schema without offset fields
+  if (!data._version) {
+    return {
+      strokes: data.strokes || [],
+      backgroundImage: data.backgroundImage || null,
+      backgroundOffsetX: 0, // Default value for old data
+      backgroundOffsetY: 0, // Default value for old data
+      _version: CURRENT_VERSION,
+    };
+  }
+
+  // Already current version
+  return data as ScribbleContent;
+}
 
 export type PersistedScribble = ReturnType<typeof createPersistedScribble>;
 
@@ -78,6 +104,21 @@ export function createPersistedScribble(key: string) {
     DEFAULT_CONTENT,
     { storage: "local" }
   );
+
+  // Migrate old data if needed
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const migrated = migrateContent(parsed);
+      if (parsed._version !== CURRENT_VERSION) {
+        stateContent.current = migrated;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to migrate scribble data:', e);
+  }
+
   let stateTools = new PersistedState<ScribbleTools>(
     key+"tools",
     DEFAULT_TOOLS,
@@ -105,6 +146,9 @@ export function createPersistedScribble(key: string) {
       stateContent.current = {
         strokes: update.strokes ?? stateContent.current.strokes,
         backgroundImage: update.backgroundImage ?? stateContent.current.backgroundImage,
+        backgroundOffsetX: update.backgroundOffsetX ?? stateContent.current.backgroundOffsetX,
+        backgroundOffsetY: update.backgroundOffsetY ?? stateContent.current.backgroundOffsetY,
+        _version: CURRENT_VERSION,
       };
     },
     undo() {
