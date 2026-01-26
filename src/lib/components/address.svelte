@@ -42,7 +42,7 @@
   {#if isKRAddress}
     <!-- Korean Address Layout -->
     <label>
-      국가*:
+      Country* (국가):
       <select {...CreateCheckout.fields.country.as('select')} required>
         <option value="">국가 선택</option>
         {#each countries as ctr }
@@ -52,12 +52,12 @@
     </label>
 
     <label>
-      이름*:
+      Name* (이름):
       <input {...CreateCheckout.fields.name.as('text')} maxlength="40" required />
     </label>
     
     <label>
-      우편번호*:
+      Postal Code* (우편번호):
       <div class="flex gap-2">
         <input
           {...CreateCheckout.fields.postalCode.as('text')}
@@ -73,7 +73,7 @@
     </label>
 
     <label>
-      도로명 주소*:
+      Address* (도로명 주소):
       <input
         {...CreateCheckout.fields.address.as('text')}
         maxlength="200"
@@ -83,7 +83,7 @@
     </label>
 
     <label>
-      상세 주소:
+      Address Line 2 (상세 주소):
       <input
         {...CreateCheckout.fields.addressLine2.as('text')}
         id="address_line_2"
@@ -93,7 +93,7 @@
     </label>
 
     <label>
-      시/군/구:
+      District (시/군/구):
       <input
         {...CreateCheckout.fields.city.as('text')}
         maxlength="200"
@@ -102,7 +102,7 @@
     </label>
 
     <label>
-      시/도:
+      City (시/도):
       <input
         {...CreateCheckout.fields.state.as('text')}
         maxlength="200"
