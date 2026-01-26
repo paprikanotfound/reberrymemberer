@@ -124,7 +124,7 @@
   </button>
 </div>
 
-<div class="fixed left-2 top-10 z-40 p-1 rounded-lg backdrop-blur-sm">
+<!-- <div class="fixed left-2 top-10 z-40 p-1 rounded-lg backdrop-blur-sm">
   <button class="flex items-center justify-center gap-1" onclick={async () => {
     try {
       // Generate front page image with current settings
@@ -151,7 +151,7 @@
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
     Download Front
   </button>
-</div>
+</div> -->
 
 <div class="flex flex-col items-start justify-center gap-8 sm:gap-12 p-3">
   <div class="grid grid-cols-3 w-full">
