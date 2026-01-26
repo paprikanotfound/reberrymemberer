@@ -254,7 +254,7 @@
         Send Date: <input {...createCheckout.fields.sendDate.as('date')} />
       </label> -->
 
-      <Address bind:fields={CreateCheckout.fields} />
+      <Address fields={CreateCheckout.fields} />
 
       <div id="issues">
         {#each CreateCheckout.fields.allIssues() as issue}
