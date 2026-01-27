@@ -121,9 +121,9 @@
         transform: translateZ(1.41px);
         background-image: radial-gradient(
           farthest-corner circle at var(--pointer-x) var(--pointer-y),
-          hsla(0, 0%, 100%, 0.6) 10%,
-          hsla(0, 0%, 100%, 0.55) 20%,
-          hsla(0, 0%, 0%, 0.5) 100%
+          hsla(0, 0%, 100%, 0.55) 10%,
+          hsla(0, 0%, 100%, 0.40) 20%,
+          hsla(0, 0%, 0%, 0) 100%
         );
         opacity: var(--alpha-glare);
       "></div>
@@ -155,18 +155,3 @@
     {@render page(back, "rotate-y-180 absolute inset-0")}
   </div>
 </div>
-
-<style>
-  /* Portrait orientation: constrain width, let aspect-ratio calculate height */
-  @media (orientation: portrait) {
-    .postcard-wrapper {
-      height: auto;
-    }
-  }
-  /* orientation: constrain height, let aspect-ratio calculate width */
-  @media (orientation: landscape) {
-    .postcard-wrapper {
-      width: auto;
-    }
-  }
-</style>
