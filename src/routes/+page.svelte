@@ -11,11 +11,11 @@
       src="./examples/front1.jpg" alt="" 
     /> -->
     <Postcard 
-      front="./examples/front1.jpg" 
-      back="./examples/page_back2.jpg"
+      front="./examples/page_back2.jpg"
+      back="./examples/front1.jpg" 
       class="select-none h-40 md:h-80 rotate-1" 
       aspect={1875/1275} 
-      />
+    />
 
     <div class="z-20 w-full">
       <span>
@@ -25,16 +25,11 @@
       <span class="max-sm:hidden inline-block"><a href="{ROUTES.send}">Send</a>.</span>
     </div>
     <Postcard 
-      front="./examples/page_back1.jpg" 
-      back="./examples/front2.jpg"
+      front="./examples/front2.jpg"
+      back="./examples/page_back1.jpg" 
       class="select-none h-40 md:h-80 rotate-1" 
       aspect={1875/1275} 
-      />
-    <!-- <img 
-      class="select-none object-cover h-44 md:h-90 postcard-shadow rotate-[.5deg]" 
-      loading="eager"
-      src="./examples/page_back1.jpg" alt="" 
-    /> -->
+    />
     <div class="fixed bottom-2 right-2 text-4xl sm:hidden">
       <a class="hover:italic decoration-solid" href="{ROUTES.send}">Send</a>
     </div>
@@ -58,7 +53,7 @@
         <hr>
         <div>
           <p class="italic">How long does it take to arrive?</p>
-          <p>Delivery typically takes 2–5 business days within the U.S., and 1–2 weeks internationally.</p>
+          <p>Delivery typically takes 2–5 business days within the U.S., and around 1–2 weeks internationally. Once mailed, delivery depends on local postal services and may occasionally take longer.</p>
         </div>
         <hr>
         <div>
